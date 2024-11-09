@@ -5,9 +5,9 @@ export class Team {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @Column()
+  @Column({ unique: true }) // Define o nome como único
   name: string;
 
-  @Column()
-  city: string;
+  @Column({ default: 11 }) // Define a quantidade de jogadores como 11
+  players: number;
 }

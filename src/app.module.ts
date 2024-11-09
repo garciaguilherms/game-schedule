@@ -15,7 +15,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
       database: 'trabalho',
       entities: [],
       synchronize: true,
-      autoLoadEntities: true, // Carrega automaticamente todas as entidades registradas
+      autoLoadEntities: true,
     }),
     TeamsModule,
   ],
