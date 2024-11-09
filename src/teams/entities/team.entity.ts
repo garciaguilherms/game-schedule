@@ -1,4 +1,5 @@
-import { Entity, Column, PrimaryGeneratedColumn } from 'typeorm';
+import { Entity, Column, PrimaryGeneratedColumn, OneToMany } from 'typeorm';
+import { Game } from '../../games/entities/game.entity';
 
 @Entity()
 export class Team {
@@ -10,4 +11,10 @@ export class Team {
 
   @Column({ default: 11 }) // Define a quantidade de jogadores como 11
   players: number;
+
+  @OneToMany(() => Game, (game) => game.homeTeam)
+  homeGames: Game[];
+
+  @OneToMany(() => Game, (game) => game.awayTeam)
+  awayGames: Game[];
 }

@@ -3,6 +3,9 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { TeamsModule } from './teams/teams.module';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { GamesModule } from './games/games.module';
+import { Team } from './teams/entities/team.entity';
+import { Game } from './games/entities/game.entity';
 
 @Module({
   imports: [
@@ -13,11 +16,12 @@ import { TypeOrmModule } from '@nestjs/typeorm';
       username: 'root',
       password: 'admin',
       database: 'trabalho',
-      entities: [],
+      entities: [Team, Game],
       synchronize: true,
       autoLoadEntities: true,
     }),
     TeamsModule,
+    GamesModule,
   ],
   controllers: [AppController],
   providers: [AppService],
