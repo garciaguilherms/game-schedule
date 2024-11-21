@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, ConflictException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { CreateGameDto } from './dto/create-game.dto';
@@ -13,6 +13,21 @@ export class GamesService {
   ) {}
 
   async create(createGameDto: CreateGameDto): Promise<Game> {
+    const { dateTime } = createGameDto;
+
+    const formattedDateTime = new Date(dateTime);
+    const utcDateTime = new Date(formattedDateTime.toISOString());
+
+    const existingGame = await this.gamesRepository.findOne({
+      where: { dateTime: utcDateTime },
+    });
+
+    if (existingGame) {
+      throw new ConflictException(
+        'Já existe um jogo marcado para o mesmo dia e horário.',
+      );
+    }
+
     const game = this.gamesRepository.create(createGameDto);
     return this.gamesRepository.save(game);
   }
