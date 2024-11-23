@@ -24,8 +24,8 @@ export class Game {
   awayTeam: Team;
 
   @Column()
-  homeTeamId: number; // Chave estrangeira para o time da casa
+  homeTeamId: number;
 
   @Column()
-  awayTeamId: number; // Chave estrangeira para o time de fora
+  awayTeamId: number;
 }

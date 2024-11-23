@@ -5,10 +5,9 @@ import Typography from "@mui/material/Typography";
 import SportsSoccerIcon from "@mui/icons-material/SportsSoccer";
 import GroupsIcon from "@mui/icons-material/Groups";
 import Link from "next/link";
-import HomeIcon from "@mui/icons-material/Home";
 import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
 import BarChartIcon from '@mui/icons-material/BarChart';
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { 
   Box, 
   Button, 
@@ -17,13 +16,14 @@ import {
   DialogActions, 
   DialogContent, 
   DialogTitle, 
-  MenuItem 
+  MenuItem,
+  Select
 } from "@mui/material";
 import FullCalendar from "@fullcalendar/react";
 import dayGridPlugin from "@fullcalendar/daygrid";
 import timeGridPlugin from "@fullcalendar/timegrid";
 import ptBrLocale from "@fullcalendar/core/locales/pt-br"; 
-
+import axios from 'axios';
 
 export function ButtonAppBar() {
   return (
@@ -100,79 +100,110 @@ export function ButtonAppBar() {
   );
 }
 
-export default function Home() {
-  const [events, setEvents] = useState([
-    { id: "1", title: "Jogo 1: Time A vs Time B", start: "2024-11-22T10:00:00", end: "2024-11-22T11:30:00", status: "Pendente" },
-    { id: "2", title: "Jogo 2: Time C vs Time D", start: "2024-11-23T14:00:00", end: "2024-11-23T15:30:00", status: "Pendente" },
-  ]);
+interface Event {
+  id: number;
+  title: string;
+  start: number;
+  end: number;
+  status: string;
+}
 
+interface Team {
+  id: number;
+  name: string;
+}
+
+export default function Home() {
+  const [events, setEvents] = useState<Event[]>([]);
   const [openDialog, setOpenDialog] = useState(false);
-  const [openEventDialog, setOpenEventDialog] = useState(false);
-  const [openConcludeDialog, setOpenConcludeDialog] = useState(false);
-  const [selectedEvent, setSelectedEvent] = useState(null);
+  const [selectedEvent, setSelectedEvent] = useState();
   const [newGame, setNewGame] = useState({
     homeTeam: "",
     awayTeam: "",
     date: "",
     startTime: "",
   });
+
+  const [games, setGames] = useState();
+  const [teams, setTeams] = useState<Team[]>([]);
   const [result, setResult] = useState("");
 
-  const handleAddEvent = () => {
+  useEffect(() => {
+    // Função para carregar os times
+    const fetchTeams = async () => {
+      try {
+        const response = await axios.get("http://localhost:3000/teams");
+        setTeams(response.data);
+      } catch (error) {
+        console.error("Erro ao carregar as equipes:", error);
+      }
+    };
+  
+    fetchTeams();
+  }, []);
+  
+  useEffect(() => {
+    // Função para carregar os jogos
+    const fetchGames = async () => {
+      try {
+        const response = await axios.get("http://localhost:3000/games");
+        console.log(response.data);
+  
+        const formattedGames = response.data.map(game => {
+          const homeTeam = teams.find(team => team.id === game.homeTeamId);
+          const awayTeam = teams.find(team => team.id === game.awayTeamId);
+  
+          if (!homeTeam || !awayTeam) {
+            console.error("Erro: Jogo sem equipe(s) definida(s)", game);
+            return null;
+          }
+  
+          return {
+            id: game.id,
+            title: `${homeTeam.name} vs ${awayTeam.name}`,
+            start: game.dateTime, // Data e hora do jogo
+            end: new Date(new Date(game.dateTime).getTime() + 90 * 60000).toISOString(),
+            status: game.status,
+          };
+        }).filter(game => game !== null);
+  
+        setGames(formattedGames);
+      } catch (error) {
+        console.error("Erro ao carregar os jogos:", error);
+      }
+    };
+  
+    if (teams.length > 0) {
+      fetchGames();
+    }
+  }, [teams]);
+
+  const handleAddEvent = async () => {
     const { homeTeam, awayTeam, date, startTime } = newGame;
+    const startDate = new Date(`${date}T${startTime}`);
+    const endDate = new Date(startDate.getTime() + 90 * 60 * 1000);
+    const title = `${homeTeam} vs ${awayTeam}`;
+    const eventData = {
+      id: Number(events.length + 1),
+      title,
+      start: startDate.getTime(),
+      end: endDate.getTime(),
+      status: "Pendente",
+    };
 
     if (!homeTeam || !awayTeam || !date || !startTime) {
       alert("Por favor, preencha todos os campos.");
       return;
     }
 
-    const start = `${date}T${startTime}`;
-    const end = new Date(new Date(start).getTime() + 90 * 60 * 1000).toISOString();
-
-    const title = `${homeTeam} vs ${awayTeam}`;
-    const id = String(events.length + 1);
-
-    setEvents([...events, { id, title, start, end, status: "Pendente" }]);
-    setNewGame({ homeTeam: "", awayTeam: "", date: "", startTime: "" });
-    setOpenDialog(false);
-  };
-
-  const handleEventClick = (clickInfo) => {
-    setSelectedEvent(clickInfo.event);
-    setOpenEventDialog(true);
-  };
-
-  const handleDeleteEvent = () => {
-    setEvents(events.filter((event) => event.id !== selectedEvent.id));
-    setOpenEventDialog(false);
-  };
-
-  const handleEditEvent = () => {
-    const [homeTeam, awayTeam] = selectedEvent.title.split(" vs ");
-    setNewGame({
-      homeTeam: homeTeam.trim(),
-      awayTeam: awayTeam.trim(),
-      date: selectedEvent.start.toISOString().split("T")[0],
-      startTime: selectedEvent.start.toISOString().split("T")[1].substring(0, 5),
+    axios.post("http://localhost:3000/games", eventData)
+    .then(response => {
+      console.log("Jogo adicionado com sucesso", response);
+      setEvents([...events, eventData]);
+    })
+    .catch(error => {
+      console.error("Erro ao adicionar jogo", error);
     });
-    setOpenEventDialog(false);
-    setOpenDialog(true);
-  };
-
-  const handleConcludeEvent = () => {
-    setOpenEventDialog(false);
-    setOpenConcludeDialog(true);
-  };
-
-  const handleSaveResult = () => {
-    const updatedEvents = events.map((event) =>
-      event.id === selectedEvent.id
-        ? { ...event, status: result, title: `${selectedEvent.title} (${result})` }
-        : event
-    );
-
-    setEvents(updatedEvents);
-    setOpenConcludeDialog(false);
   };
 
   return (
@@ -187,7 +218,7 @@ export default function Home() {
         alignItems: "center",
       }}
     >
-      <ButtonAppBar/>
+      <ButtonAppBar />
       <Box
         sx={{
           width: "90%",
@@ -215,12 +246,11 @@ export default function Home() {
             center: "title",
             right: "timeGridWeek",
           }}
-          events={events}
+          events={games} // Use games, que já contém os jogos formatados
           editable={true}
           selectable={true}
           allDaySlot={false}
           locale={ptBrLocale}
-          eventClick={handleEventClick} // Captura o clique no evento
         />
       </Box>
 
@@ -228,20 +258,32 @@ export default function Home() {
       <Dialog open={openDialog} onClose={() => setOpenDialog(false)}>
         <DialogTitle>{selectedEvent ? "Editar Jogo" : "Adicionar Novo Jogo"}</DialogTitle>
         <DialogContent>
-          <TextField
+          <Select
             label="Equipe da Casa"
             fullWidth
             margin="dense"
             value={newGame.homeTeam}
             onChange={(e) => setNewGame({ ...newGame, homeTeam: e.target.value })}
-          />
-          <TextField
+          >
+            {teams.map((team) => (
+              <MenuItem key={team.id} value={team.id}>
+                {team.name} {/* Supondo que o nome da equipe esteja em "name" */}
+              </MenuItem>
+            ))}
+          </Select>
+          <Select
             label="Equipe Visitante"
             fullWidth
             margin="dense"
             value={newGame.awayTeam}
             onChange={(e) => setNewGame({ ...newGame, awayTeam: e.target.value })}
-          />
+          >
+            {teams.map((team) => (
+              <MenuItem key={team.id} value={team.id}>
+                {team.name}
+              </MenuItem>
+            ))}
+          </Select>
           <TextField
             label="Data do Jogo"
             type="date"
@@ -264,55 +306,6 @@ export default function Home() {
             Cancelar
           </Button>
           <Button onClick={handleAddEvent} color="primary">
-            Salvar
-          </Button>
-        </DialogActions>
-      </Dialog>
-
-      {/* Modal para Opções de Evento */}
-      <Dialog open={openEventDialog} onClose={() => setOpenEventDialog(false)}>
-        <DialogTitle>Opções do Jogo</DialogTitle>
-        <DialogContent>
-          <p>O que deseja fazer com o jogo selecionado?</p>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={handleEditEvent} color="primary">
-            Editar
-          </Button>
-          <Button onClick={handleDeleteEvent} color="error">
-            Excluir
-          </Button>
-          <Button onClick={handleConcludeEvent} color="success">
-            Concluir
-          </Button>
-          <Button onClick={() => setOpenEventDialog(false)} color="secondary">
-            Cancelar
-          </Button>
-        </DialogActions>
-      </Dialog>
-
-      {/* Modal para Concluir Jogo */}
-      <Dialog open={openConcludeDialog} onClose={() => setOpenConcludeDialog(false)}>
-        <DialogTitle>Concluir Jogo</DialogTitle>
-        <DialogContent>
-          <TextField
-            select
-            label="Resultado"
-            fullWidth
-            margin="dense"
-            value={result}
-            onChange={(e) => setResult(e.target.value)}
-          >
-            <MenuItem value="Empate">Empate</MenuItem>
-            <MenuItem value="Vitória da Casa">Vitória da Casa</MenuItem>
-            <MenuItem value="Vitória do Visitante">Vitória do Visitante</MenuItem>
-          </TextField>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setOpenConcludeDialog(false)} color="secondary">
-            Cancelar
-          </Button>
-          <Button onClick={handleSaveResult} color="primary">
             Salvar
           </Button>
         </DialogActions>
