@@ -6,6 +6,7 @@ import SportsSoccerIcon from "@mui/icons-material/SportsSoccer";
 import GroupsIcon from "@mui/icons-material/Groups";
 import Link from "next/link";
 import HomeIcon from "@mui/icons-material/Home";
+import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
 import BarChartIcon from '@mui/icons-material/BarChart';
 import React, { useState } from "react";
 import { 
@@ -24,7 +25,7 @@ import timeGridPlugin from "@fullcalendar/timegrid";
 import ptBrLocale from "@fullcalendar/core/locales/pt-br"; 
 
 
-function ButtonAppBar() {
+export function ButtonAppBar() {
   return (
     <Box sx={{ flexGrow: 1 }}>
       <AppBar
@@ -36,7 +37,7 @@ function ButtonAppBar() {
       >
         <Toolbar>
           <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
-            Inicio
+            Grade de Jogos
           </Typography>
           <Box sx={{ display: "flex", gap: 2 }}>
             <Link href="/home" passHref>
@@ -48,8 +49,8 @@ function ButtonAppBar() {
                   gap: 1,
                 }}
               >
-                <HomeIcon sx={{ fontSize: 18 }} />
-                Início
+                <CalendarMonthIcon sx={{ fontSize: 18 }} />
+                Grade de Jogos
               </Button>
             </Link>
 
@@ -63,7 +64,7 @@ function ButtonAppBar() {
                 }}
               >
                 <SportsSoccerIcon sx={{ fontSize: 18 }} />
-                Partidas
+                TIMES
               </Button>
             </Link>
             <Link href="/results" passHref>
@@ -212,7 +213,7 @@ export default function Home() {
           headerToolbar={{
             left: "prev,next today",
             center: "title",
-            right: "timeGridWeek,dayGridMonth",
+            right: "timeGridWeek",
           }}
           events={events}
           editable={true}
@@ -272,7 +273,7 @@ export default function Home() {
       <Dialog open={openEventDialog} onClose={() => setOpenEventDialog(false)}>
         <DialogTitle>Opções do Jogo</DialogTitle>
         <DialogContent>
-          <p>Deseja editar, excluir ou concluir este jogo?</p>
+          <p>O que deseja fazer com o jogo selecionado?</p>
         </DialogContent>
         <DialogActions>
           <Button onClick={handleEditEvent} color="primary">
