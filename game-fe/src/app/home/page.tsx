@@ -1,17 +1,28 @@
-import Image from "next/image";
-import logo from "./logo.png";
-import * as React from "react";
+"use client";
 import AppBar from "@mui/material/AppBar";
-import Box from "@mui/material/Box";
 import Toolbar from "@mui/material/Toolbar";
 import Typography from "@mui/material/Typography";
 import SportsSoccerIcon from "@mui/icons-material/SportsSoccer";
 import GroupsIcon from "@mui/icons-material/Groups";
-import Button from "@mui/material/Button";
-import Paper from "@mui/material/Paper";
 import Link from "next/link";
 import HomeIcon from "@mui/icons-material/Home";
 import BarChartIcon from '@mui/icons-material/BarChart';
+import React, { useState } from "react";
+import { 
+  Box, 
+  Button, 
+  TextField, 
+  Dialog, 
+  DialogActions, 
+  DialogContent, 
+  DialogTitle, 
+  MenuItem 
+} from "@mui/material";
+import FullCalendar from "@fullcalendar/react";
+import dayGridPlugin from "@fullcalendar/daygrid";
+import timeGridPlugin from "@fullcalendar/timegrid";
+import ptBrLocale from "@fullcalendar/core/locales/pt-br"; 
+
 
 function ButtonAppBar() {
   return (
@@ -88,96 +99,223 @@ function ButtonAppBar() {
   );
 }
 
-
 export default function Home() {
+  const [events, setEvents] = useState([
+    { id: "1", title: "Jogo 1: Time A vs Time B", start: "2024-11-22T10:00:00", end: "2024-11-22T11:30:00", status: "Pendente" },
+    { id: "2", title: "Jogo 2: Time C vs Time D", start: "2024-11-23T14:00:00", end: "2024-11-23T15:30:00", status: "Pendente" },
+  ]);
+
+  const [openDialog, setOpenDialog] = useState(false);
+  const [openEventDialog, setOpenEventDialog] = useState(false);
+  const [openConcludeDialog, setOpenConcludeDialog] = useState(false);
+  const [selectedEvent, setSelectedEvent] = useState(null);
+  const [newGame, setNewGame] = useState({
+    homeTeam: "",
+    awayTeam: "",
+    date: "",
+    startTime: "",
+  });
+  const [result, setResult] = useState("");
+
+  const handleAddEvent = () => {
+    const { homeTeam, awayTeam, date, startTime } = newGame;
+
+    if (!homeTeam || !awayTeam || !date || !startTime) {
+      alert("Por favor, preencha todos os campos.");
+      return;
+    }
+
+    const start = `${date}T${startTime}`;
+    const end = new Date(new Date(start).getTime() + 90 * 60 * 1000).toISOString();
+
+    const title = `${homeTeam} vs ${awayTeam}`;
+    const id = String(events.length + 1);
+
+    setEvents([...events, { id, title, start, end, status: "Pendente" }]);
+    setNewGame({ homeTeam: "", awayTeam: "", date: "", startTime: "" });
+    setOpenDialog(false);
+  };
+
+  const handleEventClick = (clickInfo) => {
+    setSelectedEvent(clickInfo.event);
+    setOpenEventDialog(true);
+  };
+
+  const handleDeleteEvent = () => {
+    setEvents(events.filter((event) => event.id !== selectedEvent.id));
+    setOpenEventDialog(false);
+  };
+
+  const handleEditEvent = () => {
+    const [homeTeam, awayTeam] = selectedEvent.title.split(" vs ");
+    setNewGame({
+      homeTeam: homeTeam.trim(),
+      awayTeam: awayTeam.trim(),
+      date: selectedEvent.start.toISOString().split("T")[0],
+      startTime: selectedEvent.start.toISOString().split("T")[1].substring(0, 5),
+    });
+    setOpenEventDialog(false);
+    setOpenDialog(true);
+  };
+
+  const handleConcludeEvent = () => {
+    setOpenEventDialog(false);
+    setOpenConcludeDialog(true);
+  };
+
+  const handleSaveResult = () => {
+    const updatedEvents = events.map((event) =>
+      event.id === selectedEvent.id
+        ? { ...event, status: result, title: `${selectedEvent.title} (${result})` }
+        : event
+    );
+
+    setEvents(updatedEvents);
+    setOpenConcludeDialog(false);
+  };
+
   return (
     <Box
-      className="min-h-screen bg-gradient"
       sx={{
         background: "linear-gradient(to bottom, #ffffff, #eaf6fc)",
         minHeight: "100vh",
         paddingTop: "80px",
+        paddingBottom: "20px",
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
       }}
     >
-      <ButtonAppBar />
-
+      <ButtonAppBar/>
       <Box
         sx={{
-          display: "flex",
-          justifyContent: "center",
-          alignItems: "center",
-          paddingTop: "40px",
+          width: "90%",
+          maxWidth: "1200px",
+          backgroundColor: "white",
+          borderRadius: "8px",
+          boxShadow: "0px 6px 20px rgba(0, 0, 0, 0.1)",
+          padding: "20px",
         }}
       >
-        <Paper
-          elevation={6}
-          sx={{
-            padding: 5,
-            borderRadius: 3,
-            width: "80%",
-            maxWidth: "800px",
-            textAlign: "center",
-            backgroundColor: "white",
-            boxShadow: "0px 6px 20px rgba(0, 0, 0, 0.1)",
-          }}
+        <Button
+          variant="contained"
+          color="primary"
+          sx={{ marginBottom: "20px" }}
+          onClick={() => setOpenDialog(true)}
         >
-          <Box
-            sx={{
-              display: "flex",
-              justifyContent: "center",
-              marginBottom: 3,
-            }}
-          >
-            <Image
-              src={logo}
-              alt="Logo"
-              width={200}
-              height={200}
-              style={{
-                borderRadius: "50%",
-                border: "3px solid #005287",
-              }}
-            />
-          </Box>
-          <Typography
-            variant="h4"
-            sx={{ marginBottom: 2, fontWeight: "bold", color: "#005287" }}
-          >
-            PROJETO E GERÊNCIA DE BANCO DE DADOS
-          </Typography>
-          <Typography
-            variant="h5"
-            sx={{ marginBottom: 2, fontWeight: "bold", color: "#007BB5" }}
-          >
-            TABELA DE JOGOS
-          </Typography>
-          <Typography
-            variant="h6"
-            sx={{ marginBottom: 4, fontWeight: "normal", color: "#4A4A4A" }}
-          >
-            Integrantes: Guilherme, Thales, Bruno e Rafael
-          </Typography>
-          <Typography
-            variant="body1"
-            sx={{
-              lineHeight: 1.8,
-              fontSize: "1.1rem",
-              color: "#5A5A5A",
-              textAlign: "justify",
-            }}
-          >
-            Este trabalho tem como objetivo apresentar o desenvolvimento de um
-            banco de dados para o gerenciamento de uma tabela de jogos,
-            abordando conceitos fundamentais como a modelagem de dados,
-            normalização, criação de chaves primárias e estrangeiras. A tabela
-            de jogos será estruturada para armazenar informações essenciais
-            como jogadores, partidas e times, permitindo uma consulta eficiente
-            e fácil manutenção. O foco principal é garantir uma organização
-            eficaz dos dados, proporcionando um sistema ágil e escalável para o
-            armazenamento e recuperação das informações sobre os jogos.
-          </Typography>
-        </Paper>
+          Adicionar Novo Jogo
+        </Button>
+
+        <FullCalendar
+          plugins={[dayGridPlugin, timeGridPlugin]}
+          initialView="timeGridWeek"
+          headerToolbar={{
+            left: "prev,next today",
+            center: "title",
+            right: "timeGridWeek,dayGridMonth",
+          }}
+          events={events}
+          editable={true}
+          selectable={true}
+          allDaySlot={false}
+          locale={ptBrLocale}
+          eventClick={handleEventClick} // Captura o clique no evento
+        />
       </Box>
+
+      {/* Modal para Adicionar/Editar Novo Jogo */}
+      <Dialog open={openDialog} onClose={() => setOpenDialog(false)}>
+        <DialogTitle>{selectedEvent ? "Editar Jogo" : "Adicionar Novo Jogo"}</DialogTitle>
+        <DialogContent>
+          <TextField
+            label="Equipe da Casa"
+            fullWidth
+            margin="dense"
+            value={newGame.homeTeam}
+            onChange={(e) => setNewGame({ ...newGame, homeTeam: e.target.value })}
+          />
+          <TextField
+            label="Equipe Visitante"
+            fullWidth
+            margin="dense"
+            value={newGame.awayTeam}
+            onChange={(e) => setNewGame({ ...newGame, awayTeam: e.target.value })}
+          />
+          <TextField
+            label="Data do Jogo"
+            type="date"
+            fullWidth
+            margin="dense"
+            value={newGame.date}
+            onChange={(e) => setNewGame({ ...newGame, date: e.target.value })}
+          />
+          <TextField
+            label="Horário de Início"
+            type="time"
+            fullWidth
+            margin="dense"
+            value={newGame.startTime}
+            onChange={(e) => setNewGame({ ...newGame, startTime: e.target.value })}
+          />
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setOpenDialog(false)} color="secondary">
+            Cancelar
+          </Button>
+          <Button onClick={handleAddEvent} color="primary">
+            Salvar
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Modal para Opções de Evento */}
+      <Dialog open={openEventDialog} onClose={() => setOpenEventDialog(false)}>
+        <DialogTitle>Opções do Jogo</DialogTitle>
+        <DialogContent>
+          <p>Deseja editar, excluir ou concluir este jogo?</p>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleEditEvent} color="primary">
+            Editar
+          </Button>
+          <Button onClick={handleDeleteEvent} color="error">
+            Excluir
+          </Button>
+          <Button onClick={handleConcludeEvent} color="success">
+            Concluir
+          </Button>
+          <Button onClick={() => setOpenEventDialog(false)} color="secondary">
+            Cancelar
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Modal para Concluir Jogo */}
+      <Dialog open={openConcludeDialog} onClose={() => setOpenConcludeDialog(false)}>
+        <DialogTitle>Concluir Jogo</DialogTitle>
+        <DialogContent>
+          <TextField
+            select
+            label="Resultado"
+            fullWidth
+            margin="dense"
+            value={result}
+            onChange={(e) => setResult(e.target.value)}
+          >
+            <MenuItem value="Empate">Empate</MenuItem>
+            <MenuItem value="Vitória da Casa">Vitória da Casa</MenuItem>
+            <MenuItem value="Vitória do Visitante">Vitória do Visitante</MenuItem>
+          </TextField>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setOpenConcludeDialog(false)} color="secondary">
+            Cancelar
+          </Button>
+          <Button onClick={handleSaveResult} color="primary">
+            Salvar
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 }

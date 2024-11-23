@@ -14,7 +14,7 @@ import { Game } from './games/entities/game.entity';
       host: 'localhost',
       port: 3306,
       username: 'root',
-      password: 'admin',
+      password: '2458',
       database: 'trabalho',
       entities: [Team, Game],
       synchronize: true,
