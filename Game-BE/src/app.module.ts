@@ -6,6 +6,8 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { GamesModule } from './games/games.module';
 import { Team } from './teams/entities/team.entity';
 import { Game } from './games/entities/game.entity';
+import { GamesResultModule } from './games-result/games-result.module';
+import { GameResult } from './games-result/entities/game-result.entity';
 
 @Module({
   imports: [
@@ -16,12 +18,13 @@ import { Game } from './games/entities/game.entity';
       username: 'root',
       password: '2458',
       database: 'trabalho',
-      entities: [Team, Game],
+      entities: [Team, Game, GameResult],
       synchronize: true,
       autoLoadEntities: true,
     }),
     TeamsModule,
     GamesModule,
+    GamesResultModule,
   ],
   controllers: [AppController],
   providers: [AppService],

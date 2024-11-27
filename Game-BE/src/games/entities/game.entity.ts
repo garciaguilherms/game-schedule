@@ -4,8 +4,10 @@ import {
   PrimaryGeneratedColumn,
   ManyToOne,
   JoinColumn,
+  OneToOne,
 } from 'typeorm';
 import { Team } from '../../teams/entities/team.entity';
+import { GameResult } from '../../games-result/entities/game-result.entity';
 
 @Entity()
 export class Game {
@@ -28,4 +30,8 @@ export class Game {
 
   @Column()
   awayTeamId: number;
+
+  @OneToOne(() => GameResult, (gameResult) => gameResult.game)
+  @JoinColumn()
+  result: GameResult;
 }

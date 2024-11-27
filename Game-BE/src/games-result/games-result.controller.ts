@@ -7,7 +7,7 @@ export class GameResultController {
   constructor(private readonly gameResultService: GameResultService) {}
 
   @Post()
-  async createGameResult(@Body() gameResultDto: GameResultDto) {
+  async create(@Body() gameResultDto: GameResultDto) {
     return this.gameResultService.create(gameResultDto);
   }
 }

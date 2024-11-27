@@ -7,12 +7,12 @@ export class GameResult {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @ManyToOne(() => Game)
+  @ManyToOne(() => Game, (game) => game.result)
   @JoinColumn({ name: 'gameId' })
-  game: Game;
+  game: Game; 
 
   @Column()
-  result: string; // "Vitória da Casa", "Vitória do Visitante", "Empate"
+  result: string
 
   @ManyToOne(() => Team)
   @JoinColumn({ name: 'homeTeamId' })
@@ -30,8 +30,8 @@ export class GameResult {
 
   @ManyToOne(() => Team)
   @JoinColumn({ name: 'winningTeamId' })
-  winningTeam: Team; // Armazena o time vencedor (se houver)
+  winningTeam: Team;
 
   @Column({ nullable: true })
-  winningTeamId: number | null; // Id do time vencedor, pode ser nulo no caso de empate
+  winningTeamId: number | null;
 }

@@ -2,6 +2,7 @@ import { IsInt, IsString, IsOptional, IsNotEmpty } from 'class-validator';
 
 export class GameResultDto {
   @IsInt()
+  @IsNotEmpty()
   gameId: number;
 
   @IsString()
@@ -9,12 +10,14 @@ export class GameResultDto {
   result: string;
 
   @IsInt()
+  @IsNotEmpty()
   homeTeamId: number;
 
   @IsInt()
+  @IsNotEmpty()
   awayTeamId: number;
 
   @IsInt()
   @IsOptional()
-  winningTeamId: number | null; // O time vencedor pode ser nulo no caso de empate
+  winningTeamId: number | null;
 }
