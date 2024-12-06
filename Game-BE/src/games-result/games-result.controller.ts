@@ -1,5 +1,5 @@
 import { Controller, Post, Body } from '@nestjs/common';
-import { GameResultService } from './games-result.service'
+import { GameResultService } from './games-result.service';
 import { GameResultDto } from '../games-result/dto/game-result.dto';
 
 @Controller('game-result')

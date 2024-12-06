@@ -14,7 +14,7 @@ export class Game {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @Column({ type: 'timestamp', unique: true })
+  @Column({ type: 'timestamp' })
   dateTime: Date;
 
   @ManyToOne(() => Team)

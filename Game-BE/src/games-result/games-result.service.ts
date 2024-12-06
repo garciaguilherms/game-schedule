@@ -40,7 +40,7 @@ export class GameResultService {
       awayTeam: game.awayTeam,
       homeTeamId: game.homeTeamId,
       awayTeamId: game.awayTeamId,
-      winningTeamId: result === 'win' ? winningTeamId : null, 
+      winningTeamId: result === 'win' ? winningTeamId : null,
     });
 
     return await this.gameResultRepository.save(gameResult);

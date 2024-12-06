@@ -1,11 +1,5 @@
 import React from "react";
-import {
-  Box,
-  Grid,
-  Paper,
-  Typography,
-  Avatar,
-} from "@mui/material";
+import { Box, Grid, Paper, Typography, Avatar } from "@mui/material";
 import { ButtonAppBar } from "../home/page";
 
 export default function Results() {
@@ -29,7 +23,7 @@ export default function Results() {
         position: "relative",
       }}
     >
-      <ButtonAppBar/>
+      <ButtonAppBar />
       <Grid container spacing={6} justifyContent="center">
         {resultados.map((jogo, index) => (
           <Grid item xs={12} sm={6} md={4} key={index}>

@@ -1,4 +1,10 @@
-import { Entity, Column, PrimaryGeneratedColumn, OneToOne, JoinColumn } from 'typeorm';
+import {
+  Entity,
+  Column,
+  PrimaryGeneratedColumn,
+  OneToOne,
+  JoinColumn,
+} from 'typeorm';
 import { Team } from '../../teams/entities/team.entity';
 
 @Entity()
@@ -22,4 +28,3 @@ export class Statistics {
   @Column({ default: 0 })
   draws: number;
 }
-
