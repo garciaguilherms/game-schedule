@@ -29,7 +29,11 @@ export default function Teams() {
   const [error, setError] = React.useState<string | null>(null);
   const [createError, setCreateError] = React.useState<string | null>(null);
   const [openEditModal, setOpenEditModal] = React.useState(false);
-  const [selectedTeam, setSelectedTeam] = React.useState({ id: 0, name: "", players: 0 });
+  const [selectedTeam, setSelectedTeam] = React.useState({
+    id: 0,
+    name: "",
+    players: 0,
+  });
   const [openCreateModal, setOpenCreateModal] = React.useState(false);
   const [newTeam, setNewTeam] = React.useState({ name: "", players: 0 });
 
@@ -50,7 +54,8 @@ export default function Teams() {
       setError(null);
     } catch (error: any) {
       setError(
-        error.response?.data?.message || "Erro ao excluir o time. Tente novamente."
+        error.response?.data?.message ||
+          "Erro ao excluir o time. Tente novamente.",
       );
     }
   };
@@ -64,9 +69,13 @@ export default function Teams() {
       setTeams((prev) =>
         prev.map((team) =>
           team.id === selectedTeam.id
-            ? { ...team, name: selectedTeam.name, players: selectedTeam.players }
-            : team
-        )
+            ? {
+                ...team,
+                name: selectedTeam.name,
+                players: selectedTeam.players,
+              }
+            : team,
+        ),
       );
       handleCloseEditModal();
     } catch (error) {
@@ -83,12 +92,17 @@ export default function Teams() {
       handleCloseCreateModal();
     } catch (error: any) {
       setCreateError(
-        error.response?.data?.message || "Erro ao excluir o time. Tente novamente."
+        error.response?.data?.message ||
+          "Erro ao excluir o time. Tente novamente.",
       );
     }
   };
 
-  const handleOpenEditModal = (team: { id: number; name: string; players: number }) => {
+  const handleOpenEditModal = (team: {
+    id: number;
+    name: string;
+    players: number;
+  }) => {
     setSelectedTeam(team);
     setOpenEditModal(true);
   };
@@ -102,7 +116,7 @@ export default function Teams() {
     setCreateError(null);
     setOpenCreateModal(true);
   };
-  
+
   const handleCloseCreateModal = () => {
     setCreateError(null);
     setOpenCreateModal(false);
@@ -127,7 +141,10 @@ export default function Teams() {
 
       {error && (
         <Box sx={{ marginBottom: 4, textAlign: "center" }}>
-          <Alert severity="error" onClose={() => setError(null)}> {error} </Alert>
+          <Alert severity="error" onClose={() => setError(null)}>
+            {" "}
+            {error}{" "}
+          </Alert>
         </Box>
       )}
 
@@ -164,7 +181,12 @@ export default function Teams() {
             borderRadius: 2,
           }}
         >
-          <Typography id="edit-team-modal" variant="h6" component="h2" sx={{ marginBottom: 2 }}>
+          <Typography
+            id="edit-team-modal"
+            variant="h6"
+            component="h2"
+            sx={{ marginBottom: 2 }}
+          >
             Editar Time
           </Typography>
           <TextField
@@ -172,7 +194,9 @@ export default function Teams() {
             fullWidth
             margin="normal"
             value={selectedTeam.name}
-            onChange={(e) => setSelectedTeam({ ...selectedTeam, name: e.target.value })}
+            onChange={(e) =>
+              setSelectedTeam({ ...selectedTeam, name: e.target.value })
+            }
           />
           <TextField
             label="Quantidade de Jogadores"
@@ -180,13 +204,30 @@ export default function Teams() {
             margin="normal"
             type="number"
             value={selectedTeam.players}
-            onChange={(e) => setSelectedTeam({ ...selectedTeam, players: +e.target.value })}
+            onChange={(e) =>
+              setSelectedTeam({ ...selectedTeam, players: +e.target.value })
+            }
           />
-          <Box sx={{ display: "flex", justifyContent: "flex-end", gap: 2, marginTop: 2 }}>
-            <Button onClick={handleCloseEditModal} variant="outlined" color="error">
+          <Box
+            sx={{
+              display: "flex",
+              justifyContent: "flex-end",
+              gap: 2,
+              marginTop: 2,
+            }}
+          >
+            <Button
+              onClick={handleCloseEditModal}
+              variant="outlined"
+              color="error"
+            >
               Cancelar
             </Button>
-            <Button onClick={handleUpdateTeam} variant="contained" color="primary">
+            <Button
+              onClick={handleUpdateTeam}
+              variant="contained"
+              color="primary"
+            >
               Salvar
             </Button>
           </Box>
@@ -213,11 +254,19 @@ export default function Teams() {
           }}
         >
           {createError && (
-          <Box sx={{ marginBottom: 4, textAlign: "center" }}>
-            <Alert severity="error" onClose={() => setCreateError(null)}> {createError} </Alert>
-          </Box>
-        )}
-          <Typography id="create-team-modal" variant="h6" component="h2" sx={{ marginBottom: 2 }}>
+            <Box sx={{ marginBottom: 4, textAlign: "center" }}>
+              <Alert severity="error" onClose={() => setCreateError(null)}>
+                {" "}
+                {createError}{" "}
+              </Alert>
+            </Box>
+          )}
+          <Typography
+            id="create-team-modal"
+            variant="h6"
+            component="h2"
+            sx={{ marginBottom: 2 }}
+          >
             Criar Novo Time
           </Typography>
           <TextField
@@ -233,13 +282,30 @@ export default function Teams() {
             margin="normal"
             type="number"
             value={newTeam.players}
-            onChange={(e) => setNewTeam({ ...newTeam, players: +e.target.value })}
+            onChange={(e) =>
+              setNewTeam({ ...newTeam, players: +e.target.value })
+            }
           />
-          <Box sx={{ display: "flex", justifyContent: "flex-end", gap: 2, marginTop: 2 }}>
-            <Button onClick={handleCloseCreateModal} variant="outlined" color="error">
+          <Box
+            sx={{
+              display: "flex",
+              justifyContent: "flex-end",
+              gap: 2,
+              marginTop: 2,
+            }}
+          >
+            <Button
+              onClick={handleCloseCreateModal}
+              variant="outlined"
+              color="error"
+            >
               Cancelar
             </Button>
-            <Button onClick={handleCreateTeam} variant="contained" color="primary">
+            <Button
+              onClick={handleCreateTeam}
+              variant="contained"
+              color="primary"
+            >
               Criar
             </Button>
           </Box>
@@ -323,7 +389,7 @@ export default function Teams() {
                   sx={{
                     color: "#fff",
                     background: "rgba(255, 0, 0, 0.2)",
-                    width: 32, 
+                    width: 32,
                     height: 32,
                     "&:hover": { background: "rgba(255, 0, 0, 0.3)" },
                   }}

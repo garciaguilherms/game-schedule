@@ -4,14 +4,10 @@ import Toolbar from "@mui/material/Toolbar";
 import Typography from "@mui/material/Typography";
 import SportsSoccerIcon from "@mui/icons-material/SportsSoccer";
 import FormControl from "@mui/material/FormControl";
-import FormLabel from "@mui/material/FormLabel";
-import FormControlLabel from "@mui/material/FormControlLabel";
 import InputLabel from "@mui/material/InputLabel";
-import Radio from "@mui/material/Radio";
 import GroupsIcon from "@mui/icons-material/Groups";
 import Link from "next/link";
 import CalendarMonthIcon from "@mui/icons-material/CalendarMonth";
-import RadioGroup from "@mui/material/RadioGroup";
 import BarChartIcon from "@mui/icons-material/BarChart";
 import React, { useState, useEffect } from "react";
 import {
@@ -24,11 +20,12 @@ import {
   DialogTitle,
   MenuItem,
   Select,
+  Alert,
+  Modal,
 } from "@mui/material";
 import FullCalendar from "@fullcalendar/react";
 import dayGridPlugin from "@fullcalendar/daygrid";
 import timeGridPlugin from "@fullcalendar/timegrid";
-import { EventClickArg } from "@fullcalendar/core";
 import ptBrLocale from "@fullcalendar/core/locales/pt-br";
 import axios from "axios";
 
@@ -110,8 +107,8 @@ export function ButtonAppBar() {
 interface Game {
   id?: number;
   dateTime: string;
-  homeTeamId: number;
-  awayTeamId: number;
+  homeTeamId?: number; // Tornando homeTeamId opcional
+  awayTeamId?: number; // Tornando awayTeamId opcional
   result?: string;
 }
 
@@ -121,14 +118,19 @@ interface Team {
 }
 
 export default function Home() {
+  const [error, setError] = useState(null);
   const [openDialog, setOpenDialog] = useState(false);
+  const [openAddDialog, setOpenAddDialog] = useState(false);
+  const [openEditDialog, setOpenEditDialog] = useState(false);
   const [openFinishDialog, setOpenFinishDialog] = useState(false);
   const [games, setGames] = useState<Game[]>([]);
   const [teams, setTeams] = useState<Team[]>([]);
   const [selectedEvent, setSelectedEvent] = useState<Game | null>(null);
   const [openActionModal, setOpenActionModal] = useState(false);
   const [gameResult, setGameResult] = useState({
-    result: "", // pode ser 'win' ou 'draw'
+    homePoints: 0,
+    awayPoints: 0,
+    result: "",
     winningTeam: null as string | null,
   });
 
@@ -138,15 +140,6 @@ export default function Home() {
     date: "",
     startTime: "",
   });
-
-  const handleEventClick = (clickInfo: EventClickArg) => {
-    const eventId = clickInfo.event.id;
-    const game = games.find((g) => g.id?.toString() === eventId);
-    if (game) {
-      setSelectedEvent(game);
-      setOpenActionModal(true);
-    }
-  };
 
   const fetchGames = async (teams: Team[]) => {
     try {
@@ -159,7 +152,7 @@ export default function Home() {
             awayTeamId: number;
             id: { toString: () => any };
             dateTime: string | number | Date;
-            status: any;
+            game_status: any;
           }) => {
             const homeTeam = teams.find((team) => team.id === game.homeTeamId);
             const awayTeam = teams.find((team) => team.id === game.awayTeamId);
@@ -179,7 +172,7 @@ export default function Home() {
               end: new Date(
                 new Date(game.dateTime).getTime() + 90 * 60000,
               ).toISOString(),
-              status: game.status,
+              game_status: game.game_status,
             };
           },
         )
@@ -207,6 +200,7 @@ export default function Home() {
         dateTime,
       });
 
+      setError(null);
       fetchGames(teams);
       setNewGame({
         homeTeam: "",
@@ -214,9 +208,13 @@ export default function Home() {
         date: "",
         startTime: "",
       });
-      setOpenDialog(false);
-    } catch (error) {
-      console.error("Erro ao adicionar jogo:", error);
+      setOpenAddDialog(false);
+    } catch (error: any) {
+      console.log(error);
+      setError(
+        error.response?.data?.message ||
+          "Erro ao criar o jogo. Tente novamente.",
+      );
     }
   };
 
@@ -232,14 +230,18 @@ export default function Home() {
   };
 
   const handleEditGame = (game: Game) => {
+    const [date, time] = game.dateTime.split("T");
+    const formattedTime = time.slice(0, 5);
+  
     setNewGame({
       homeTeam: game.homeTeamId.toString(),
       awayTeam: game.awayTeamId.toString(),
-      date: game.dateTime.split("T")[0],
-      startTime: game.dateTime.split("T")[1].slice(0, 5),
+      date: date,
+      startTime: formattedTime,
     });
+  
     setSelectedEvent(game);
-    setOpenDialog(true);
+    setOpenEditDialog(true);
   };
 
   const handleSaveEditGame = async () => {
@@ -261,66 +263,104 @@ export default function Home() {
       });
 
       fetchGames(teams);
+      setSelectedEvent(null);
+      setOpenEditDialog(false);
+      setOpenActionModal(false);
+      setError(null);
       setNewGame({
         homeTeam: "",
         awayTeam: "",
         date: "",
         startTime: "",
       });
-      setSelectedEvent(null);
-      setOpenDialog(false);
-      setOpenActionModal(false);
-    } catch (error) {
-      console.error("Erro ao editar jogo:", error);
+    } catch (error: any) {
+      setError(
+        error.response?.data?.message ||
+          "Erro ao criar o jogo. Tente novamente.",
+      );
+      console.log(error.response.data.message);
     }
   };
 
   const handleFinishGame = async (game: Game) => {
-    if (!game) {
-      console.error("Jogo inválido.");
+    if (gameResult.homePoints === null || gameResult.awayPoints === null) {
+      alert("Por favor, insira os gols de ambos os times.");
       return;
     }
 
-    if (!gameResult.result) {
-      alert("Por favor, selecione o resultado do jogo.");
-      return;
+    let game_status = "empate";
+    let winningTeamId = null;
+
+    if (gameResult.homePoints > gameResult.awayPoints) {
+      game_status = "finalizado";
+      winningTeamId = game.homeTeamId;
+    } else if (gameResult.awayPoints > gameResult.homePoints) {
+      game_status = "finalizado";
+      winningTeamId = game.awayTeamId;
     }
+
+    const resultPayload = {
+      game_status: game_status,
+      winningTeamId: winningTeamId,
+      homePoints: gameResult.homePoints,
+      awayPoints: gameResult.awayPoints,
+    };
 
     try {
-      const resultPayload = {
-        gameId: game.id,
-        result: gameResult.result,
-        homeTeamId: game.homeTeamId,
-        awayTeamId: game.awayTeamId,
-        winningTeamId:
-          gameResult.result === "win" ? gameResult.winningTeam : null,
-      };
-
-      await axios.post("http://localhost:3000/game-result", resultPayload);
-
-      alert("Resultado registrado com sucesso!");
+      await axios.patch(
+        `http://localhost:3000/games/${game.id}/result`,
+        resultPayload,
+      );
 
       setOpenFinishDialog(false);
       setOpenActionModal(false);
 
       const updatedGames = games.map((g) =>
-        g.id === game.id ? { ...g, result: gameResult.result } : g,
+        g.id === game.id
+          ? { ...g, result: game_status, winningTeamId: winningTeamId }
+          : g,
       );
       setGames(updatedGames);
+      fetchGames(teams);
     } catch (error) {
       console.error("Erro ao registrar o resultado do jogo:", error);
-      alert("Ocorreu um erro ao registrar o resultado.");
     }
   };
 
-  const handleChangeResult = (event: React.ChangeEvent<{ value: unknown }>) => {
-    const selectedResult = event.target.value as string;
-    setGameResult((prevState) => ({
-      ...prevState,
-      result: selectedResult,
-      winningTeam: selectedResult === "win" ? "" : prevState.winningTeam, // resetar winningTeam se for empate
-    }));
+  const getGameById = (gameId: string) => {
+    return games.find((game) => game.id.toString() === gameId);
   };
+
+  const isGameFinalized = (game: any) => {
+    return game?.game_status !== null;
+  };
+
+  const handleEventClick = (info: { event: { id: any } }) => {
+    const selectedGame = getGameById(info.event.id);
+
+    if (isGameFinalized(selectedGame)) {
+      alert("Este jogo já tem um resultado e não pode ser editado!");
+      return;
+    }
+
+    setSelectedEvent(selectedGame);
+    setOpenActionModal(true);
+  };
+
+  const getEventClassNames = (info: { event: { id: any } }) => {
+    const game = getGameById(info.event.id);
+    return isGameFinalized(game) ? ["event-finalizado"] : [];
+  };
+
+  const closeEditModal = (() => {
+    setOpenEditDialog(false);
+    setNewGame({
+      homeTeam: "",
+      awayTeam: "",
+      date: "",
+      startTime: "",
+    });
+  })
 
   useEffect(() => {
     const fetchTeamsAndGames = async () => {
@@ -363,7 +403,7 @@ export default function Home() {
           variant="contained"
           color="primary"
           sx={{ marginBottom: "20px" }}
-          onClick={() => setOpenDialog(true)}
+          onClick={() => setOpenAddDialog(true)}
         >
           Adicionar Novo Jogo
         </Button>
@@ -381,95 +421,263 @@ export default function Home() {
           allDaySlot={false}
           locale={ptBrLocale}
           timeZone="local"
-          eventClick={(info) => {
-            const selectedGame = games.find(
-              (game) => game.id.toString() === info.event.id,
-            );
-
-            if (selectedGame && selectedGame.result) {
-              alert("Este jogo já tem um resultado e não pode ser editado!");
-              return;
-            }
-
-            setSelectedEvent(selectedGame);
-            setOpenActionModal(true);
-          }}
-          eventClassNames={(info) => {
-            const game = games.find(
-              (game) => game.id.toString() === info.event.id,
-            );
-            return game?.result ? ["event-finalizado"] : [];
-          }}
+          eventClick={handleEventClick}
+          eventClassNames={getEventClassNames}
         />
       </Box>
 
-      {/* Modal para Adicionar/Editar Novo Jogo */}
-      <Dialog open={openDialog} onClose={() => setOpenDialog(false)}>
-        <DialogTitle>
-          {selectedEvent ? "Editar Jogo" : "Adicionar Novo Jogo"}
-        </DialogTitle>
-        <DialogContent>
-          <Select
-            label="Equipe da Casa"
-            fullWidth
-            margin="dense"
-            value={newGame.homeTeam}
-            onChange={(e) =>
-              setNewGame({ ...newGame, homeTeam: e.target.value })
-            }
+      {/* Modal para adicionar novo jogo */}
+      <Modal
+        open={openAddDialog}
+        onClose={() => setOpenAddDialog(false)}
+        aria-labelledby="add-game-modal"
+        aria-describedby="add-game-modal-description"
+      >
+        <Box
+          sx={{
+            position: "absolute",
+            top: "50%",
+            left: "50%",
+            transform: "translate(-50%, -50%)",
+            width: 400,
+            bgcolor: "background.paper",
+            boxShadow: 24,
+            p: 4,
+            borderRadius: 2,
+          }}
+        >
+          <Typography
+            id="add-game-modal"
+            variant="h6"
+            component="h2"
+            sx={{ marginBottom: 2 }}
           >
-            {teams.map((team) => (
-              <MenuItem key={team.id} value={team.id}>
-                {team.name}
-              </MenuItem>
-            ))}
-          </Select>
-          <Select
-            label="Equipe Visitante"
-            fullWidth
-            margin="dense"
-            value={newGame.awayTeam}
-            onChange={(e) =>
-              setNewGame({ ...newGame, awayTeam: e.target.value })
-            }
+            Adicionar Novo Jogo
+          </Typography>
+
+          {error && (
+            <Box sx={{ marginBottom: 4, textAlign: "center" }}>
+              <Alert severity="error" onClose={() => setError(null)}>
+                {error}
+              </Alert>
+            </Box>
+          )}
+
+          <FormControl fullWidth margin="normal">
+            <InputLabel id="home-team-label">Equipe da Casa</InputLabel>
+            <Select
+              labelId="home-team-label"
+              value={newGame.homeTeam}
+              onChange={(e) =>
+                setNewGame({ ...newGame, homeTeam: e.target.value })
+              }
+            >
+              {teams.map((team) => (
+                <MenuItem key={team.id} value={team.id}>
+                  {team.name}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+
+          <FormControl fullWidth margin="normal">
+            <InputLabel id="away-team-label">Equipe Visitante</InputLabel>
+            <Select
+              labelId="away-team-label"
+              value={newGame.awayTeam}
+              onChange={(e) =>
+                setNewGame({ ...newGame, awayTeam: e.target.value })
+              }
+            >
+              {teams.map((team) => (
+                <MenuItem key={team.id} value={team.id}>
+                  {team.name}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+
+          <FormControl fullWidth margin="normal">
+            <InputLabel htmlFor="game-date"></InputLabel>
+            <TextField
+              id="game-date"
+              type="date"
+              fullWidth
+              value={newGame.date}
+              onChange={(e) => setNewGame({ ...newGame, date: e.target.value })}
+            />
+          </FormControl>
+
+          {/* Envolvendo o TextField de horário com FormControl */}
+          <FormControl fullWidth margin="normal">
+            <InputLabel htmlFor="start-time"></InputLabel>
+            <TextField
+              id="start-time"
+              type="time"
+              fullWidth
+              value={newGame.startTime}
+              onChange={(e) =>
+                setNewGame({ ...newGame, startTime: e.target.value })
+              }
+              InputLabelProps={{
+                shrink: true, // Para garantir que o label se mova para cima
+              }}
+            />
+          </FormControl>
+
+          <Box
+            sx={{
+              display: "flex",
+              justifyContent: "flex-end",
+              gap: 2,
+              marginTop: 2,
+            }}
           >
-            {teams.map((team) => (
-              <MenuItem key={team.id} value={team.id}>
-                {team.name}
-              </MenuItem>
-            ))}
-          </Select>
-          <TextField
-            label="Data do Jogo"
-            type="date"
-            fullWidth
-            margin="dense"
-            value={newGame.date}
-            onChange={(e) => setNewGame({ ...newGame, date: e.target.value })}
-          />
-          <TextField
-            label="Horário de Início"
-            type="time"
-            fullWidth
-            margin="dense"
-            value={newGame.startTime}
-            onChange={(e) =>
-              setNewGame({ ...newGame, startTime: e.target.value })
-            }
-          />
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setOpenDialog(false)} color="secondary">
-            Cancelar
-          </Button>
-          <Button
-            onClick={selectedEvent ? handleSaveEditGame : handleAddGame}
-            color="primary"
+            <Button
+              onClick={() => setOpenAddDialog(false)}
+              variant="outlined"
+              color="error"
+            >
+              Cancelar
+            </Button>
+            <Button onClick={handleAddGame} variant="contained" color="primary">
+              Adicionar Jogo
+            </Button>
+          </Box>
+        </Box>
+      </Modal>
+
+      {/* Modal para editar jogo */}
+      <Modal
+        open={openEditDialog}
+        onClose={() => setOpenEditDialog(false)}
+        aria-labelledby="edit-game-modal"
+        aria-describedby="edit-game-modal-description"
+      >
+        <Box
+          sx={{
+            position: "absolute",
+            top: "50%",
+            left: "50%",
+            transform: "translate(-50%, -50%)",
+            width: 400,
+            bgcolor: "background.paper",
+            boxShadow: 24,
+            p: 4,
+            borderRadius: 2,
+          }}
+        >
+          <Typography
+            id="edit-game-modal"
+            variant="h6"
+            component="h2"
+            sx={{ marginBottom: 2 }}
           >
-            Salvar
-          </Button>
-        </DialogActions>
-      </Dialog>
+            Editar Jogo
+          </Typography>
+
+          {error && (
+            <Box sx={{ marginBottom: 4, textAlign: "center" }}>
+              <Alert severity="error" onClose={() => setError(null)}>
+                {error}
+              </Alert>
+            </Box>
+          )}
+
+          <FormControl fullWidth margin="normal">
+            <InputLabel id="home-team-label">Equipe da Casa</InputLabel>
+            <Select
+              labelId="home-team-label"
+              value={selectedEvent?.homeTeamId || ""}
+              onChange={(e) =>
+                setSelectedEvent({
+                  ...selectedEvent,
+                  homeTeamId: e.target.value,
+                })
+              }
+            >
+              {teams.map((team) => (
+                <MenuItem key={team.id} value={team.id}>
+                  {team.name}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+
+          <FormControl fullWidth margin="normal">
+            <InputLabel id="away-team-label">Equipe Visitante</InputLabel>
+            <Select
+              labelId="away-team-label"
+              value={selectedEvent?.awayTeamId || ""}
+              onChange={(e) =>
+                setSelectedEvent({
+                  ...selectedEvent,
+                  awayTeamId: e.target.value,
+                })
+              }
+            >
+              {teams.map((team) => (
+                <MenuItem key={team.id} value={team.id}>
+                  {team.name}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+
+          <FormControl fullWidth margin="normal">
+            <InputLabel htmlFor="game-date"></InputLabel>
+            <TextField
+              id="game-date"
+              type="date"
+              fullWidth
+              value={selectedEvent?.dateTime.split("T")[0] || ""}
+              onChange={(e) =>
+                setSelectedEvent({ ...selectedEvent, dateTime: e.target.value })
+              }
+            />
+          </FormControl>
+
+          <FormControl fullWidth margin="normal">
+            <InputLabel htmlFor="start-time"></InputLabel>
+            <TextField
+              id="start-time"
+              type="time"
+              fullWidth
+              value={selectedEvent?.dateTime.split("T")[1] || ""}
+              onChange={(e) =>
+                setSelectedEvent({
+                  ...selectedEvent,
+                  dateTime: `${selectedEvent.dateTime.split("T")[0]}T${e.target.value}:00`,
+                })
+              }        
+            />
+          </FormControl>
+
+          <Box
+            sx={{
+              display: "flex",
+              justifyContent: "flex-end",
+              gap: 2,
+              marginTop: 2,
+            }}
+          >
+            <Button
+              onClick={closeEditModal}
+              variant="outlined"
+              color="error"
+            >
+              Cancelar
+            </Button>
+            <Button
+              onClick={handleSaveEditGame}
+              variant="contained"
+              color="primary"
+            >
+              Salvar Alterações
+            </Button>
+          </Box>
+        </Box>
+      </Modal>
 
       <Dialog open={openActionModal} onClose={() => setOpenActionModal(false)}>
         <DialogTitle>Gerenciar Jogo</DialogTitle>
@@ -503,65 +711,51 @@ export default function Home() {
           <Button onClick={() => setOpenActionModal(false)}>Cancelar</Button>
         </DialogActions>
       </Dialog>
+
       <Dialog
         open={openFinishDialog}
         onClose={() => setOpenFinishDialog(false)}
       >
         <DialogTitle>Registrar Resultado do Jogo</DialogTitle>
         <DialogContent>
-          <FormControl fullWidth margin="dense">
-            <InputLabel id="result-label">Resultado</InputLabel>
-            <Select
-              labelId="result-label"
-              value={gameResult.result || ""}
-              onChange={handleChangeResult}
-            >
-              <MenuItem value="">Selecione o Resultado</MenuItem>
-              <MenuItem value="draw">Empate</MenuItem>
-              <MenuItem value="win">Vitória</MenuItem>
-            </Select>
-          </FormControl>
-
-          {gameResult.result === "win" && selectedEvent && (
-            <FormControl fullWidth margin="dense">
-              <InputLabel id="winning-team-label">Time Vencedor</InputLabel>
-              <Select
-                labelId="winning-team-label"
-                value={gameResult.winningTeam || ""} // Garantir que nunca seja null
-                onChange={(e) =>
-                  setGameResult({ ...gameResult, winningTeam: e.target.value })
-                }
-              >
-                <MenuItem value="">Selecione o Time Vencedor</MenuItem>
-                {/* Encontrando o time da casa e visitante pelo ID */}
-                <MenuItem value={selectedEvent.homeTeamId}>
-                  {
-                    teams.find((team) => team.id === selectedEvent.homeTeamId)
-                      ?.name
-                  }{" "}
-                  {/* Nome do time da casa */}
-                </MenuItem>
-                <MenuItem value={selectedEvent.awayTeamId}>
-                  {
-                    teams.find((team) => team.id === selectedEvent.awayTeamId)
-                      ?.name
-                  }{" "}
-                  {/* Nome do time visitante */}
-                </MenuItem>
-              </Select>
-            </FormControl>
-          )}
+          {/* Gols do Time da Casa */}
+          <TextField
+            label="Gols do Time da Casa"
+            type="number"
+            value={gameResult.homePoints || ""}
+            onChange={(e) =>
+              setGameResult({
+                ...gameResult,
+                homePoints: parseInt(e.target.value),
+              })
+            }
+            fullWidth
+            margin="dense"
+          />
+          {/* Gols do Time Visitante */}
+          <TextField
+            label="Gols do Time Visitante"
+            type="number"
+            value={gameResult.awayPoints || ""}
+            onChange={(e) =>
+              setGameResult({
+                ...gameResult,
+                awayPoints: parseInt(e.target.value),
+              })
+            }
+            fullWidth
+            margin="dense"
+          />
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setOpenDialog(false)} color="secondary">
+          <Button onClick={() => setOpenFinishDialog(false)} color="secondary">
             Cancelar
           </Button>
           <Button
             onClick={() => selectedEvent && handleFinishGame(selectedEvent)}
             color="primary"
             disabled={
-              !gameResult.result ||
-              (gameResult.result === "win" && !gameResult.winningTeam)
+              gameResult.homePoints === null || gameResult.awayPoints === null
             }
           >
             Salvar

@@ -8,6 +8,7 @@ import { Repository } from 'typeorm';
 import { CreateGameDto } from './dto/create-game.dto';
 import { UpdateGameDto } from './dto/update-game.dto';
 import { Game } from './entities/game.entity';
+import { UpdateGameResultDto } from './dto/update-game-result.dto';
 
 @Injectable()
 export class GamesService {
@@ -22,18 +23,18 @@ export class GamesService {
     const formattedDateTime = new Date(dateTime);
     const utcDateTime = new Date(formattedDateTime.toISOString());
 
-    const existingGame = await this.gamesRepository.findOne({
-      where: { dateTime: utcDateTime },
-    });
-
-    if (existingGame) {
-      throw new ConflictException(
-        'Já existe um jogo marcado para o mesmo dia e horário.',
-      );
+    try {
+      const game = this.gamesRepository.create(createGameDto);
+      return await this.gamesRepository.save(game);
+    } catch (error) {
+      if (error.code === 'ER_SIGNAL_EXCEPTION' && error.sqlState === '45000') {
+        throw new ConflictException(
+          'Já existe um jogo marcado com os mesmos times neste horário.',
+        );
+      }
+      console.error('Erro inesperado:', error);
+      throw error;
     }
-
-    const game = this.gamesRepository.create(createGameDto);
-    return this.gamesRepository.save(game);
   }
 
   async findAll(): Promise<Game[]> {
@@ -65,5 +66,27 @@ export class GamesService {
   async remove(id: number): Promise<void> {
     const game = await this.findOne(id);
     await this.gamesRepository.remove(game);
+  }
+
+  async updateResult(
+    id: number,
+    updateGameResultDto: UpdateGameResultDto,
+  ): Promise<Game> {
+    const game = await this.gamesRepository.findOne({ where: { id } });
+    if (!game) {
+      throw new NotFoundException(
+        `Não foi encontrado nenhum jogo com id: ${id}`,
+      );
+    }
+    console.log(updateGameResultDto);
+
+    game.game_status = updateGameResultDto.game_status;
+    game.homePoints = updateGameResultDto.homePoints;
+    game.awayPoints = updateGameResultDto.awayPoints;
+    game.winningTeamId = updateGameResultDto.winningTeamId;
+
+    console.log(game);
+    await this.gamesRepository.save(game);
+    return game;
   }
 }

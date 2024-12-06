@@ -1,4 +1,9 @@
-import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  ConflictException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { CreateTeamDto } from './dto/create-team.dto';
@@ -22,7 +27,9 @@ export class TeamsService {
     });
 
     if (existingTeam) {
-      throw new ConflictException(`Um time com o nome "${createTeamDto.name}" já existe.`);
+      throw new ConflictException(
+        `Um time com o nome "${createTeamDto.name}" já existe.`,
+      );
     }
 
     const team = this.teamsRepository.create(createTeamDto);
@@ -59,11 +66,13 @@ export class TeamsService {
     const gamesCount = await this.gamesRepository.count({
       where: [{ homeTeamId: id }, { awayTeamId: id }],
     });
-  
+
     if (gamesCount > 0) {
-      throw new BadRequestException(`Não é possível excluir o time, pois ele está associado a ${gamesCount} jogos.`);
+      throw new BadRequestException(
+        `Não é possível excluir o time, pois ele está associado a ${gamesCount} jogos.`,
+      );
     }
-  
+
     const team = await this.teamsRepository.findOneBy({ id });
     if (!team) {
       throw new NotFoundException(`Time com ID ${id} não encontrado`);

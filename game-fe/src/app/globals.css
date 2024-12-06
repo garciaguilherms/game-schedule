@@ -21,9 +21,5 @@ body {
 }
 
 .event-finalizado {
-  background-color: green !important;
-  color: white;
-  font-weight: bold;
-  border: 2px solid #fff;
-  box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+  background-color: rgb(71, 129, 71) !important;
 }

@@ -1,4 +1,10 @@
-import { IsDate, IsNotEmpty, IsNumber } from 'class-validator';
+import {
+  IsDate,
+  IsInt,
+  IsNotEmpty,
+  IsNumber,
+  IsOptional,
+} from 'class-validator';
 
 export class CreateGameDto {
   @IsDate()
