@@ -4,7 +4,7 @@ import {
   ConflictException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { IsNull, Not, Repository } from 'typeorm';
 import { CreateGameDto } from './dto/create-game.dto';
 import { UpdateGameDto } from './dto/update-game.dto';
 import { Game } from './entities/game.entity';
@@ -89,4 +89,13 @@ export class GamesService {
     await this.gamesRepository.save(game);
     return game;
   }
+
+  async gameResult(): Promise<Game[]> {
+    return this.gamesRepository.find({
+      where: {
+        game_status: Not(IsNull()),
+      },
+      relations: ['homeTeam', 'awayTeam'],
+    });
+  }  
 }

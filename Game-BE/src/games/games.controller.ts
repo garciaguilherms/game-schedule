@@ -28,6 +28,11 @@ export class GamesController {
     return this.gamesService.findAll();
   }
 
+  @Get('results') 
+  getByStatusNotNull(): Promise<Game[]> {
+    return this.gamesService.gameResult();
+  }
+
   @Get(':id')
   findOne(@Param('id') id: number): Promise<Game> {
     return this.gamesService.findOne(id);

@@ -107,8 +107,8 @@ export function ButtonAppBar() {
 interface Game {
   id?: number;
   dateTime: string;
-  homeTeamId?: number; // Tornando homeTeamId opcional
-  awayTeamId?: number; // Tornando awayTeamId opcional
+  homeTeamId?: number;
+  awayTeamId?: number;
   result?: string;
 }
 
@@ -232,14 +232,14 @@ export default function Home() {
   const handleEditGame = (game: Game) => {
     const [date, time] = game.dateTime.split("T");
     const formattedTime = time.slice(0, 5);
-  
+
     setNewGame({
       homeTeam: game.homeTeamId.toString(),
       awayTeam: game.awayTeamId.toString(),
       date: date,
       startTime: formattedTime,
     });
-  
+
     setSelectedEvent(game);
     setOpenEditDialog(true);
   };
@@ -352,7 +352,7 @@ export default function Home() {
     return isGameFinalized(game) ? ["event-finalizado"] : [];
   };
 
-  const closeEditModal = (() => {
+  const closeEditModal = () => {
     setOpenEditDialog(false);
     setNewGame({
       homeTeam: "",
@@ -360,7 +360,7 @@ export default function Home() {
       date: "",
       startTime: "",
     });
-  })
+  };
 
   useEffect(() => {
     const fetchTeamsAndGames = async () => {
@@ -649,7 +649,7 @@ export default function Home() {
                   ...selectedEvent,
                   dateTime: `${selectedEvent.dateTime.split("T")[0]}T${e.target.value}:00`,
                 })
-              }        
+              }
             />
           </FormControl>
 
@@ -661,11 +661,7 @@ export default function Home() {
               marginTop: 2,
             }}
           >
-            <Button
-              onClick={closeEditModal}
-              variant="outlined"
-              color="error"
-            >
+            <Button onClick={closeEditModal} variant="outlined" color="error">
               Cancelar
             </Button>
             <Button
@@ -718,7 +714,6 @@ export default function Home() {
       >
         <DialogTitle>Registrar Resultado do Jogo</DialogTitle>
         <DialogContent>
-          {/* Gols do Time da Casa */}
           <TextField
             label="Gols do Time da Casa"
             type="number"
@@ -732,7 +727,6 @@ export default function Home() {
             fullWidth
             margin="dense"
           />
-          {/* Gols do Time Visitante */}
           <TextField
             label="Gols do Time Visitante"
             type="number"
