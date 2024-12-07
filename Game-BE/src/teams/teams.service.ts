@@ -36,8 +36,14 @@ export class TeamsService {
     return this.teamsRepository.save(team);
   }
 
-  async findAll(): Promise<Team[]> {
-    return await this.teamsRepository.find();
+  async findAll(name?: string): Promise<Team[]> {
+    const queryBuilder = this.teamsRepository.createQueryBuilder('team');
+
+    if (name) {
+      queryBuilder.where('team.name LIKE :name', { name: `%${name}%` });
+    }
+
+    return await queryBuilder.getMany();
   }
 
   async findOne(id: number): Promise<Team> {

@@ -6,6 +6,7 @@ import {
   Patch,
   Param,
   Delete,
+  Query,
 } from '@nestjs/common';
 import { TeamsService } from './teams.service';
 import { CreateTeamDto } from './dto/create-team.dto';
@@ -22,8 +23,8 @@ export class TeamsController {
   }
 
   @Get()
-  getAll(): Promise<Team[]> {
-    return this.teamsService.findAll();
+  getAll(@Query('name') name?: string): Promise<Team[]> {
+    return this.teamsService.findAll(name);
   }
 
   @Get(':id')

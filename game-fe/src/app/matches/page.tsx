@@ -36,14 +36,21 @@ export default function Teams() {
   });
   const [openCreateModal, setOpenCreateModal] = React.useState(false);
   const [newTeam, setNewTeam] = React.useState({ name: "", players: 0 });
+  const [searchTerm, setSearchTerm] = useState<string>("");
 
-  const fetchTeams = async () => {
+  const fetchTeams = async (name?: string) => {
     try {
-      const teamResponse = await axios.get("http://localhost:3000/teams");
+      const query = name ? `?name=${encodeURIComponent(name)}` : "";
+      const teamResponse = await axios.get(`http://localhost:3000/teams${query}`);
       setTeams(teamResponse.data);
     } catch (error) {
-      console.error("Erro ao carregar equipes e jogos:", error);
+      console.error("Erro ao carregar equipes:", error);
     }
+  };
+
+  const handleSearch = (term: string) => {
+    setSearchTerm(term); // Atualiza o termo de busca no estado
+    fetchTeams(term); // Chama o backend para buscar os times filtrados
   };
 
   const handleDeleteTeam = async (id: number | undefined) => {
@@ -55,7 +62,7 @@ export default function Teams() {
     } catch (error: any) {
       setError(
         error.response?.data?.message ||
-          "Erro ao excluir o time. Tente novamente.",
+        "Erro ao excluir o time. Tente novamente.",
       );
     }
   };
@@ -70,10 +77,10 @@ export default function Teams() {
         prev.map((team) =>
           team.id === selectedTeam.id
             ? {
-                ...team,
-                name: selectedTeam.name,
-                players: selectedTeam.players,
-              }
+              ...team,
+              name: selectedTeam.name,
+              players: selectedTeam.players,
+            }
             : team,
         ),
       );
@@ -93,7 +100,7 @@ export default function Teams() {
     } catch (error: any) {
       setCreateError(
         error.response?.data?.message ||
-          "Erro ao excluir o time. Tente novamente.",
+        "Erro ao excluir o time. Tente novamente.",
       );
     }
   };
@@ -147,6 +154,16 @@ export default function Teams() {
           </Alert>
         </Box>
       )}
+
+      <Box sx={{ display: "flex", justifyContent: "center", marginBottom: 4 }}>
+        <TextField
+          label="Buscar por Nome"
+          variant="outlined"
+          value={searchTerm}
+          onChange={(e) => handleSearch(e.target.value)}
+          sx={{ width: "50%" }}
+        />
+      </Box>
 
       <Box sx={{ display: "flex", justifyContent: "center", marginBottom: 4 }}>
         <Button
