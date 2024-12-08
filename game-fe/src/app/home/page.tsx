@@ -149,28 +149,40 @@ export default function Home() {
       const params = new URLSearchParams();
       if (filters?.teamName) params.append("teamName", filters.teamName);
       if (filters?.date) params.append("date", filters.date);
-
       const response = await axios.get(`http://localhost:3000/games?${params.toString()}`);
+      const formattedGames = response.data
+        .map(
+          (game: {
+            homeTeamId: number;
+            awayTeamId: number;
+            id: { toString: () => any };
+            dateTime: string | number | Date;
+            game_status: any;
+          }) => {
+            const homeTeam = teams.find((team) => team.id === game.homeTeamId);
+            const awayTeam = teams.find((team) => team.id === game.awayTeamId);
+            if (!homeTeam || !awayTeam) {
+              console.error("Erro: Jogo sem equipe(s) definida(s)", game);
+              return null;
+            }
 
-      const formattedGames = response.data.map((game: any) => {
-        const homeTeam = teams.find((team) => team.id === game.homeTeamId);
-        const awayTeam = teams.find((team) => team.id === game.awayTeamId);
-
-        if (!homeTeam || !awayTeam) {
-          console.error("Erro: Jogo sem equipe(s) definida(s)", game);
-          return null;
-        }
-
-        return {
-          id: game.id.toString(),
-          title: `${homeTeam.name} vs ${awayTeam.name}`,
-          start: game.dateTime,
-          end: new Date(new Date(game.dateTime).getTime() + 90 * 60000).toISOString(),
-        };
-      }).filter((game: any) => game !== null);
+            return {
+              id: game.id?.toString(),
+              homeTeamId: game.homeTeamId,
+              awayTeamId: game.awayTeamId,
+              dateTime: game.dateTime,
+              title: `${homeTeam.name} vs ${awayTeam.name}`,
+              start: game.dateTime,
+              end: new Date(
+                new Date(game.dateTime).getTime() + 90 * 60000,
+              ).toISOString(),
+              game_status: game.game_status,
+            };
+          },
+        )
+        .filter((game: null) => game !== null);
 
       setGames(formattedGames as Game[]);
-
       if (formattedGames.length > 0) {
         const firstGameDate = formattedGames[0].start;
         const calendarApi = calendarRef.current?.getApi();
@@ -180,7 +192,6 @@ export default function Home() {
       console.error("Erro ao carregar os jogos:", error);
     }
   };
-
 
   const handleAddGame = async () => {
     const { homeTeam, awayTeam, date, startTime } = newGame;
@@ -435,7 +446,7 @@ export default function Home() {
           Adicionar Novo Jogo
         </Button>
         <FullCalendar
-          ref={calendarRef} // Conectar o FullCalendar à referência
+          ref={calendarRef}
           plugins={[dayGridPlugin, timeGridPlugin]}
           initialView="timeGridWeek"
           headerToolbar={{
@@ -449,6 +460,8 @@ export default function Home() {
           allDaySlot={false}
           locale={ptBrLocale}
           timeZone="local"
+          eventClick={handleEventClick}
+          eventClassNames={getEventClassNames}
         />
 
       </Box>
