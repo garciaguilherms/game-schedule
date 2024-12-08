@@ -37,8 +37,24 @@ export class GamesService {
     }
   }
 
-  async findAll(): Promise<Game[]> {
-    return await this.gamesRepository.find();
+  async findFilteredGames(teamName?: string, date?: string): Promise<Game[]> {
+    const queryBuilder = this.gamesRepository
+      .createQueryBuilder('game')
+      .leftJoinAndSelect('game.homeTeam', 'homeTeam')
+      .leftJoinAndSelect('game.awayTeam', 'awayTeam');
+
+    if (teamName) {
+      queryBuilder.andWhere(
+        '(homeTeam.name LIKE :teamName OR awayTeam.name LIKE :teamName)',
+        { teamName: `%${teamName}%` },
+      );
+    }
+
+    if (date) {
+      queryBuilder.andWhere('DATE(game.dateTime) = :date', { date });
+    }
+
+    return await queryBuilder.getMany();
   }
 
   async findOne(id: number): Promise<Game> {
@@ -97,5 +113,5 @@ export class GamesService {
       },
       relations: ['homeTeam', 'awayTeam'],
     });
-  }  
+  }
 }

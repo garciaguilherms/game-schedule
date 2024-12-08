@@ -9,7 +9,7 @@ import GroupsIcon from "@mui/icons-material/Groups";
 import Link from "next/link";
 import CalendarMonthIcon from "@mui/icons-material/CalendarMonth";
 import BarChartIcon from "@mui/icons-material/BarChart";
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import {
   Box,
   Button,
@@ -140,49 +140,47 @@ export default function Home() {
     date: "",
     startTime: "",
   });
+  const [filter, setFilter] = useState({ teamName: "", date: "" });
+  const calendarRef = useRef<FullCalendar>(null);
 
-  const fetchGames = async (teams: Team[]) => {
+
+  const fetchGames = async (teams: Team[], filters?: { teamName?: string; date?: string }) => {
     try {
-      const response = await axios.get("http://localhost:3000/games");
+      const params = new URLSearchParams();
+      if (filters?.teamName) params.append("teamName", filters.teamName);
+      if (filters?.date) params.append("date", filters.date);
 
-      const formattedGames = response.data
-        .map(
-          (game: {
-            homeTeamId: number;
-            awayTeamId: number;
-            id: { toString: () => any };
-            dateTime: string | number | Date;
-            game_status: any;
-          }) => {
-            const homeTeam = teams.find((team) => team.id === game.homeTeamId);
-            const awayTeam = teams.find((team) => team.id === game.awayTeamId);
+      const response = await axios.get(`http://localhost:3000/games?${params.toString()}`);
 
-            if (!homeTeam || !awayTeam) {
-              console.error("Erro: Jogo sem equipe(s) definida(s)", game);
-              return null;
-            }
+      const formattedGames = response.data.map((game: any) => {
+        const homeTeam = teams.find((team) => team.id === game.homeTeamId);
+        const awayTeam = teams.find((team) => team.id === game.awayTeamId);
 
-            return {
-              id: game.id?.toString(),
-              homeTeamId: game.homeTeamId,
-              awayTeamId: game.awayTeamId,
-              dateTime: game.dateTime,
-              title: `${homeTeam.name} vs ${awayTeam.name}`,
-              start: game.dateTime,
-              end: new Date(
-                new Date(game.dateTime).getTime() + 90 * 60000,
-              ).toISOString(),
-              game_status: game.game_status,
-            };
-          },
-        )
-        .filter((game: null) => game !== null);
+        if (!homeTeam || !awayTeam) {
+          console.error("Erro: Jogo sem equipe(s) definida(s)", game);
+          return null;
+        }
+
+        return {
+          id: game.id.toString(),
+          title: `${homeTeam.name} vs ${awayTeam.name}`,
+          start: game.dateTime,
+          end: new Date(new Date(game.dateTime).getTime() + 90 * 60000).toISOString(),
+        };
+      }).filter((game: any) => game !== null);
 
       setGames(formattedGames as Game[]);
+
+      if (formattedGames.length > 0) {
+        const firstGameDate = formattedGames[0].start;
+        const calendarApi = calendarRef.current?.getApi();
+        calendarApi?.gotoDate(firstGameDate);
+      }
     } catch (error) {
       console.error("Erro ao carregar os jogos:", error);
     }
   };
+
 
   const handleAddGame = async () => {
     const { homeTeam, awayTeam, date, startTime } = newGame;
@@ -213,7 +211,7 @@ export default function Home() {
       console.log(error);
       setError(
         error.response?.data?.message ||
-          "Erro ao criar o jogo. Tente novamente.",
+        "Erro ao criar o jogo. Tente novamente.",
       );
     }
   };
@@ -276,7 +274,7 @@ export default function Home() {
     } catch (error: any) {
       setError(
         error.response?.data?.message ||
-          "Erro ao criar o jogo. Tente novamente.",
+        "Erro ao criar o jogo. Tente novamente.",
       );
       console.log(error.response.data.message);
     }
@@ -376,6 +374,14 @@ export default function Home() {
     fetchTeamsAndGames();
   }, []);
 
+  const handleFilterChange = (key: string, value: string) => {
+    setFilter((prev) => ({ ...prev, [key]: value }));
+  };
+
+  const applyFilter = () => {
+    fetchGames(teams, filter);
+  };
+
   return (
     <Box
       sx={{
@@ -388,6 +394,27 @@ export default function Home() {
         alignItems: "center",
       }}
     >
+      <Box sx={{ display: "flex", gap: 2, marginBottom: 4 }}>
+        <TextField
+          label="Buscar por Nome do Time"
+          variant="outlined"
+          value={filter.teamName}
+          onChange={(e) => handleFilterChange("teamName", e.target.value)}
+          sx={{ width: "40%" }}
+        />
+        <TextField
+          label="Data do Jogo"
+          type="date"
+          variant="outlined"
+          value={filter.date}
+          onChange={(e) => handleFilterChange("date", e.target.value)}
+          InputLabelProps={{ shrink: true }}
+          sx={{ width: "30%" }}
+        />
+        <Button variant="contained" color="primary" onClick={applyFilter}>
+          Filtrar
+        </Button>
+      </Box>
       <ButtonAppBar />
       <Box
         sx={{
@@ -408,6 +435,7 @@ export default function Home() {
           Adicionar Novo Jogo
         </Button>
         <FullCalendar
+          ref={calendarRef} // Conectar o FullCalendar à referência
           plugins={[dayGridPlugin, timeGridPlugin]}
           initialView="timeGridWeek"
           headerToolbar={{
@@ -421,9 +449,8 @@ export default function Home() {
           allDaySlot={false}
           locale={ptBrLocale}
           timeZone="local"
-          eventClick={handleEventClick}
-          eventClassNames={getEventClassNames}
         />
+
       </Box>
 
       {/* Modal para adicionar novo jogo */}

@@ -7,6 +7,7 @@ import {
   Param,
   Delete,
   BadRequestException,
+  Query,
 } from '@nestjs/common';
 import { GamesService } from './games.service';
 import { CreateGameDto } from './dto/create-game.dto';
@@ -24,8 +25,11 @@ export class GamesController {
   }
 
   @Get()
-  getAll(): Promise<Game[]> {
-    return this.gamesService.findAll();
+  getFilteredGames(
+    @Query('teamName') teamName?: string,
+    @Query('date') date?: string,
+  ): Promise<Game[]> {
+    return this.gamesService.findFilteredGames(teamName, date);
   }
 
   @Get('results') 
