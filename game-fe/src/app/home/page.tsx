@@ -140,15 +140,16 @@ export default function Home() {
     date: "",
     startTime: "",
   });
-  const [filter, setFilter] = useState({ teamName: "", date: "" });
+  const [filter, setFilter] = useState({ teamName: "", date: "", gameStatus: "" });
   const calendarRef = useRef<FullCalendar>(null);
 
 
-  const fetchGames = async (teams: Team[], filters?: { teamName?: string; date?: string }) => {
+  const fetchGames = async (teams: Team[], filters?: { teamName?: string; date?: string, gameStatus?: string, }) => {
     try {
       const params = new URLSearchParams();
       if (filters?.teamName) params.append("teamName", filters.teamName);
       if (filters?.date) params.append("date", filters.date);
+      if (filters?.gameStatus) params.append("gameStatus", filters.gameStatus);
       const response = await axios.get(`http://localhost:3000/games?${params.toString()}`);
       const formattedGames = response.data
         .map(
@@ -407,7 +408,7 @@ export default function Home() {
     >
       <Box sx={{ display: "flex", gap: 2, marginBottom: 4 }}>
         <TextField
-          label="Buscar por Nome do Time"
+          label="Buscar por Time"
           variant="outlined"
           value={filter.teamName}
           onChange={(e) => handleFilterChange("teamName", e.target.value)}
@@ -422,6 +423,18 @@ export default function Home() {
           InputLabelProps={{ shrink: true }}
           sx={{ width: "30%" }}
         />
+        <FormControl variant="outlined" sx={{ width: "40%" }}>
+          <InputLabel>Status</InputLabel>
+          <Select
+            value={filter.gameStatus}
+            onChange={(e) => handleFilterChange("gameStatus", e.target.value)}
+            label="Status"
+          >
+            <MenuItem value="finalizado">Finalizado</MenuItem>
+            <MenuItem value="empate">Empate</MenuItem>
+            <MenuItem value="null">Pendente</MenuItem>
+          </Select>
+      </FormControl>
         <Button variant="contained" color="primary" onClick={applyFilter}>
           Filtrar
         </Button>
@@ -548,7 +561,6 @@ export default function Home() {
             />
           </FormControl>
 
-          {/* Envolvendo o TextField de horário com FormControl */}
           <FormControl fullWidth margin="normal">
             <InputLabel htmlFor="start-time"></InputLabel>
             <TextField
@@ -559,9 +571,6 @@ export default function Home() {
               onChange={(e) =>
                 setNewGame({ ...newGame, startTime: e.target.value })
               }
-              InputLabelProps={{
-                shrink: true, // Para garantir que o label se mova para cima
-              }}
             />
           </FormControl>
 

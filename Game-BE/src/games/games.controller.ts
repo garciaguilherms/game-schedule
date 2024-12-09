@@ -28,8 +28,9 @@ export class GamesController {
   getFilteredGames(
     @Query('teamName') teamName?: string,
     @Query('date') date?: string,
+    @Query('gameStatus') gameStatus?: string,
   ): Promise<Game[]> {
-    return this.gamesService.findFilteredGames(teamName, date);
+    return this.gamesService.findFilteredGames(teamName, date, gameStatus);
   }
 
   @Get('results') 

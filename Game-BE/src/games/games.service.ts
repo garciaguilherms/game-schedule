@@ -37,7 +37,7 @@ export class GamesService {
     }
   }
 
-  async findFilteredGames(teamName?: string, date?: string): Promise<Game[]> {
+  async findFilteredGames(teamName?: string, date?: string, gameStatus?: string): Promise<Game[]> {
     const queryBuilder = this.gamesRepository
       .createQueryBuilder('game')
       .leftJoinAndSelect('game.homeTeam', 'homeTeam')
@@ -52,6 +52,10 @@ export class GamesService {
 
     if (date) {
       queryBuilder.andWhere('DATE(game.dateTime) = :date', { date });
+    }
+
+    if (gameStatus) {
+      queryBuilder.andWhere('LOWER(game.game_status) = LOWER(:gameStatus)', { gameStatus });
     }
 
     return await queryBuilder.getMany();
