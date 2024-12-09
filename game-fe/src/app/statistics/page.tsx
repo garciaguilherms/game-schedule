@@ -55,7 +55,11 @@ export default function Statistics() {
           alignItems: "center",
         }}
       >
-        {error && <Typography variant="h6" color="error">{error}</Typography>}
+        {error && (
+          <Typography variant="h6" color="error">
+            {error}
+          </Typography>
+        )}
         <TableContainer
           component={Paper}
           elevation={6}
@@ -134,17 +138,24 @@ export default function Statistics() {
               </TableRow>
             </TableHead>
             <TableBody>
-  {stats.map((stat, index) => (
-    <TableRow key={index}>
-      <TableCell>{stat.team.name}</TableCell>
-      <TableCell align="center">{stat.wins + stat.losses + stat.draws}</TableCell>
-      <TableCell align="center">{stat.wins}</TableCell>
-      <TableCell align="center">{stat.draws}</TableCell>
-      <TableCell align="center">{stat.losses}</TableCell>
-      <TableCell align="center">{calculateWinPercentage(stat.wins, stat.wins + stat.losses + stat.draws)}</TableCell>
-    </TableRow>
-  ))}
-</TableBody>
+              {stats.map((stat, index) => (
+                <TableRow key={index}>
+                  <TableCell>{stat.team.name}</TableCell>
+                  <TableCell align="center">
+                    {stat.wins + stat.losses + stat.draws}
+                  </TableCell>
+                  <TableCell align="center">{stat.wins}</TableCell>
+                  <TableCell align="center">{stat.draws}</TableCell>
+                  <TableCell align="center">{stat.losses}</TableCell>
+                  <TableCell align="center">
+                    {calculateWinPercentage(
+                      stat.wins,
+                      stat.wins + stat.losses + stat.draws,
+                    )}
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
           </Table>
         </TableContainer>
       </Box>

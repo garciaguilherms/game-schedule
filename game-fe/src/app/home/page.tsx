@@ -140,11 +140,25 @@ export default function Home() {
     date: "",
     startTime: "",
   });
-  const [filter, setFilter] = useState({ teamName: "", date: "", gameStatus: "", awayTeamId: "", homeTeamId: "" });
+  const [filter, setFilter] = useState({
+    teamName: "",
+    date: "",
+    gameStatus: "",
+    awayTeamId: "",
+    homeTeamId: "",
+  });
   const calendarRef = useRef<FullCalendar>(null);
 
-
-  const fetchGames = async (teams: Team[], filters?: { teamName?: string; date?: string, gameStatus?: string, awayTeamId?: string, homeTeamId?: string }) => {
+  const fetchGames = async (
+    teams: Team[],
+    filters?: {
+      teamName?: string;
+      date?: string;
+      gameStatus?: string;
+      awayTeamId?: string;
+      homeTeamId?: string;
+    },
+  ) => {
     try {
       const params = new URLSearchParams();
       if (filters?.teamName) params.append("teamName", filters.teamName);
@@ -152,7 +166,9 @@ export default function Home() {
       if (filters?.gameStatus) params.append("gameStatus", filters.gameStatus);
       if (filters?.awayTeamId) params.append("awayTeamId", filters.awayTeamId);
       if (filters?.homeTeamId) params.append("homeTeamId", filters.homeTeamId);
-      const response = await axios.get(`http://localhost:3000/games?${params.toString()}`);
+      const response = await axios.get(
+        `http://localhost:3000/games?${params.toString()}`,
+      );
       const formattedGames = response.data
         .map(
           (game: {
@@ -174,9 +190,9 @@ export default function Home() {
 
             const isFinalized = game.game_status === "finalizado";
             const isDraw = game.game_status === "empate";
-            
+
             if (isFinalized || isDraw) {
-              var title = `${homeTeam.name} ${game.homePoints} x ${game.awayPoints} ${awayTeam.name}`
+              var title = `${homeTeam.name} ${game.homePoints} x ${game.awayPoints} ${awayTeam.name}`;
             } else {
               var title = `${homeTeam.name} vs ${awayTeam.name}`;
             }
@@ -192,7 +208,7 @@ export default function Home() {
                 new Date(game.dateTime).getTime() + 90 * 60000,
               ).toISOString(),
               game_status: game.game_status,
-              isDraw
+              isDraw,
             };
           },
         )
@@ -205,7 +221,6 @@ export default function Home() {
         const calendarApi = calendarRef.current?.getApi();
         calendarApi?.gotoDate(firstGameDate);
       }
-      
     } catch (error) {
       console.error("Erro ao carregar os jogos:", error);
     }
@@ -240,7 +255,7 @@ export default function Home() {
       console.log(error);
       setError(
         error.response?.data?.message ||
-        "Erro ao criar o jogo. Tente novamente.",
+          "Erro ao criar o jogo. Tente novamente.",
       );
     }
   };
@@ -303,7 +318,7 @@ export default function Home() {
     } catch (error: any) {
       setError(
         error.response?.data?.message ||
-        "Erro ao criar o jogo. Tente novamente.",
+          "Erro ao criar o jogo. Tente novamente.",
       );
       console.log(error.response.data.message);
     }
@@ -359,11 +374,11 @@ export default function Home() {
   };
 
   const isGameFinalized = (game: any) => {
-    return game?.game_status === 'finalizado';
+    return game?.game_status === "finalizado";
   };
 
   const isGameTied = (game: any) => {
-    return game?.game_status === 'empate';
+    return game?.game_status === "empate";
   };
 
   const handleEventClick = (info: { event: { id: any } }) => {
@@ -381,9 +396,9 @@ export default function Home() {
   const getEventClassNames = (info: { event: { id: any } }) => {
     const game = getGameById(info.event.id);
     if (isGameFinalized(game)) {
-      return ["event-finalizado"]
+      return ["event-finalizado"];
     } else if (isGameTied(game)) {
-      return ["event-empate"]
+      return ["event-empate"];
     }
     return [];
   };
@@ -432,13 +447,13 @@ export default function Home() {
         alignItems: "center",
       }}
     >
-      <Box sx={{ display: "flex", gap: 2, marginBottom: 4 }}>
+      <Box sx={{ display: "flex", gap: 4, marginBottom: 4, width: "1000px" }}>
         <TextField
           label="Buscar por Time"
           variant="outlined"
           value={filter.teamName}
           onChange={(e) => handleFilterChange("teamName", e.target.value)}
-          sx={{ width: "40%" }}
+          sx={{ width: "100%" }}
         />
         <TextField
           label="Data do Jogo"
@@ -447,9 +462,9 @@ export default function Home() {
           value={filter.date}
           onChange={(e) => handleFilterChange("date", e.target.value)}
           InputLabelProps={{ shrink: true }}
-          sx={{ width: "30%" }}
+          sx={{ width: "100%" }}
         />
-        <FormControl variant="outlined" sx={{ width: "40%" }}>
+        <FormControl variant="outlined" sx={{ width: "100%" }}>
           <InputLabel>Status</InputLabel>
           <Select
             value={filter.gameStatus}
@@ -460,35 +475,35 @@ export default function Home() {
             <MenuItem value="empate">Empate</MenuItem>
             <MenuItem value="null">Pendente</MenuItem>
           </Select>
-      </FormControl>
-      <FormControl variant="outlined" sx={{ width: "30%" }}>
-    <InputLabel>Time da Casa</InputLabel>
-    <Select
-      value={filter.homeTeamId || ""}
-      onChange={(e) => handleFilterChange("homeTeamId", e.target.value)}
-      label="Time da Casa"
-    >
-      {teams.map((team) => (
-        <MenuItem key={team.id} value={team.id}>
-          {team.name}
-        </MenuItem>
-      ))}
-    </Select>
-  </FormControl>
-  <FormControl variant="outlined" sx={{ width: "30%" }}>
-    <InputLabel>Time Visitante</InputLabel>
-    <Select
-      value={filter.awayTeamId || ""}
-      onChange={(e) => handleFilterChange("awayTeamId", e.target.value)}
-      label="Time Visitante"
-    >
-      {teams.map((team) => (
-        <MenuItem key={team.id} value={team.id}>
-          {team.name}
-        </MenuItem>
-      ))}
-    </Select>
-  </FormControl>
+        </FormControl>
+        <FormControl variant="outlined" sx={{ width: "100%" }}>
+          <InputLabel>Time da Casa</InputLabel>
+          <Select
+            value={filter.homeTeamId || ""}
+            onChange={(e) => handleFilterChange("homeTeamId", e.target.value)}
+            label="Time da Casa"
+          >
+            {teams.map((team) => (
+              <MenuItem key={team.id} value={team.id}>
+                {team.name}
+              </MenuItem>
+            ))}
+          </Select>
+        </FormControl>
+        <FormControl variant="outlined" sx={{ width: "100%" }}>
+          <InputLabel>Time Visitante</InputLabel>
+          <Select
+            value={filter.awayTeamId || ""}
+            onChange={(e) => handleFilterChange("awayTeamId", e.target.value)}
+            label="Time Visitante"
+          >
+            {teams.map((team) => (
+              <MenuItem key={team.id} value={team.id}>
+                {team.name}
+              </MenuItem>
+            ))}
+          </Select>
+        </FormControl>
         <Button variant="contained" color="primary" onClick={applyFilter}>
           Filtrar
         </Button>
@@ -496,8 +511,8 @@ export default function Home() {
       <ButtonAppBar />
       <Box
         sx={{
-          width: "90%",
-          maxWidth: "1200px",
+          width: "80%",
+          height: "80%",
           backgroundColor: "white",
           borderRadius: "8px",
           boxShadow: "0px 6px 20px rgba(0, 0, 0, 0.1)",
@@ -530,7 +545,6 @@ export default function Home() {
           eventClick={handleEventClick}
           eventClassNames={getEventClassNames}
         />
-
       </Box>
 
       {/* Modal para adicionar novo jogo */}

@@ -26,23 +26,22 @@ export class GamesController {
 
   @Get()
   getFilteredGames(
-  @Query('teamName') teamName?: string,
-  @Query('date') date?: string,
-  @Query('gameStatus') gameStatus?: string,
-  @Query('awayTeamId') awayTeamId?: number,
-  @Query('homeTeamId') homeTeamId?: number,
-): Promise<Game[]> {
-  return this.gamesService.findFilteredGames(
-    teamName,
-    date,
-    gameStatus,
-    homeTeamId,
-    awayTeamId,
-  );
-}
+    @Query('teamName') teamName?: string,
+    @Query('date') date?: string,
+    @Query('gameStatus') gameStatus?: string,
+    @Query('awayTeamId') awayTeamId?: number,
+    @Query('homeTeamId') homeTeamId?: number,
+  ): Promise<Game[]> {
+    return this.gamesService.findFilteredGames(
+      teamName,
+      date,
+      gameStatus,
+      homeTeamId,
+      awayTeamId,
+    );
+  }
 
-
-  @Get('results') 
+  @Get('results')
   getByStatusNotNull(): Promise<Game[]> {
     return this.gamesService.gameResult();
   }

@@ -35,7 +35,11 @@ export default function Results() {
       }}
     >
       <ButtonAppBar />
-      {error && <Typography variant="h6" color="error">{error}</Typography>}
+      {error && (
+        <Typography variant="h6" color="error">
+          {error}
+        </Typography>
+      )}
       <Grid container spacing={6} justifyContent="center">
         {results.map((jogo, index) => {
           const gameDate = new Date(jogo.dateTime);

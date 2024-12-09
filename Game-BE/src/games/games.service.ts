@@ -48,29 +48,31 @@ export class GamesService {
       .createQueryBuilder('game')
       .leftJoinAndSelect('game.homeTeam', 'homeTeam')
       .leftJoinAndSelect('game.awayTeam', 'awayTeam');
-  
+
     if (teamName) {
       queryBuilder.andWhere(
         '(homeTeam.name LIKE :teamName OR awayTeam.name LIKE :teamName)',
         { teamName: `%${teamName}%` },
       );
     }
-  
+
     if (date) {
       queryBuilder.andWhere('DATE(game.dateTime) = :date', { date });
     }
-  
+
     if (gameStatus) {
-      queryBuilder.andWhere('game.game_status LIKE :gameStatus', { gameStatus });
+      queryBuilder.andWhere('game.game_status LIKE :gameStatus', {
+        gameStatus,
+      });
     }
-  
+
     if (homeTeamId && awayTeamId) {
       queryBuilder.andWhere(
         '(game.homeTeamId = :homeTeamId AND game.awayTeamId = :awayTeamId)',
         { homeTeamId, awayTeamId },
       );
     }
-  
+
     return await queryBuilder.getMany();
   }
 

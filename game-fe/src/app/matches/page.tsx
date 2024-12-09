@@ -41,7 +41,9 @@ export default function Teams() {
   const fetchTeams = async (name?: string) => {
     try {
       const query = name ? `?name=${encodeURIComponent(name)}` : "";
-      const teamResponse = await axios.get(`http://localhost:3000/teams${query}`);
+      const teamResponse = await axios.get(
+        `http://localhost:3000/teams${query}`,
+      );
       setTeams(teamResponse.data);
     } catch (error) {
       console.error("Erro ao carregar equipes:", error);
@@ -62,7 +64,7 @@ export default function Teams() {
     } catch (error: any) {
       setError(
         error.response?.data?.message ||
-        "Erro ao excluir o time. Tente novamente.",
+          "Erro ao excluir o time. Tente novamente.",
       );
     }
   };
@@ -77,10 +79,10 @@ export default function Teams() {
         prev.map((team) =>
           team.id === selectedTeam.id
             ? {
-              ...team,
-              name: selectedTeam.name,
-              players: selectedTeam.players,
-            }
+                ...team,
+                name: selectedTeam.name,
+                players: selectedTeam.players,
+              }
             : team,
         ),
       );
@@ -100,7 +102,7 @@ export default function Teams() {
     } catch (error: any) {
       setCreateError(
         error.response?.data?.message ||
-        "Erro ao excluir o time. Tente novamente.",
+          "Erro ao excluir o time. Tente novamente.",
       );
     }
   };
