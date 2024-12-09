@@ -140,16 +140,18 @@ export default function Home() {
     date: "",
     startTime: "",
   });
-  const [filter, setFilter] = useState({ teamName: "", date: "", gameStatus: "" });
+  const [filter, setFilter] = useState({ teamName: "", date: "", gameStatus: "", awayTeamId: "", homeTeamId: "" });
   const calendarRef = useRef<FullCalendar>(null);
 
 
-  const fetchGames = async (teams: Team[], filters?: { teamName?: string; date?: string, gameStatus?: string, }) => {
+  const fetchGames = async (teams: Team[], filters?: { teamName?: string; date?: string, gameStatus?: string, awayTeamId?: string, homeTeamId?: string }) => {
     try {
       const params = new URLSearchParams();
       if (filters?.teamName) params.append("teamName", filters.teamName);
       if (filters?.date) params.append("date", filters.date);
       if (filters?.gameStatus) params.append("gameStatus", filters.gameStatus);
+      if (filters?.awayTeamId) params.append("awayTeamId", filters.awayTeamId);
+      if (filters?.homeTeamId) params.append("homeTeamId", filters.homeTeamId);
       const response = await axios.get(`http://localhost:3000/games?${params.toString()}`);
       const formattedGames = response.data
         .map(
@@ -159,12 +161,24 @@ export default function Home() {
             id: { toString: () => any };
             dateTime: string | number | Date;
             game_status: any;
+            homePoints: number;
+            awayPoints: number;
           }) => {
             const homeTeam = teams.find((team) => team.id === game.homeTeamId);
             const awayTeam = teams.find((team) => team.id === game.awayTeamId);
+
             if (!homeTeam || !awayTeam) {
               console.error("Erro: Jogo sem equipe(s) definida(s)", game);
               return null;
+            }
+
+            const isFinalized = game.game_status === "finalizado";
+            const isDraw = game.game_status === "empate";
+            
+            if (isFinalized || isDraw) {
+              var title = `${homeTeam.name} ${game.homePoints} x ${game.awayPoints} ${awayTeam.name}`
+            } else {
+              var title = `${homeTeam.name} vs ${awayTeam.name}`;
             }
 
             return {
@@ -172,23 +186,26 @@ export default function Home() {
               homeTeamId: game.homeTeamId,
               awayTeamId: game.awayTeamId,
               dateTime: game.dateTime,
-              title: `${homeTeam.name} vs ${awayTeam.name}`,
+              title: title,
               start: game.dateTime,
               end: new Date(
                 new Date(game.dateTime).getTime() + 90 * 60000,
               ).toISOString(),
               game_status: game.game_status,
+              isDraw
             };
           },
         )
         .filter((game: null) => game !== null);
 
       setGames(formattedGames as Game[]);
+
       if (formattedGames.length > 0) {
         const firstGameDate = formattedGames[0].start;
         const calendarApi = calendarRef.current?.getApi();
         calendarApi?.gotoDate(firstGameDate);
       }
+      
     } catch (error) {
       console.error("Erro ao carregar os jogos:", error);
     }
@@ -342,13 +359,17 @@ export default function Home() {
   };
 
   const isGameFinalized = (game: any) => {
-    return game?.game_status !== null;
+    return game?.game_status === 'finalizado';
+  };
+
+  const isGameTied = (game: any) => {
+    return game?.game_status === 'empate';
   };
 
   const handleEventClick = (info: { event: { id: any } }) => {
     const selectedGame = getGameById(info.event.id);
 
-    if (isGameFinalized(selectedGame)) {
+    if (isGameFinalized(selectedGame) || isGameTied(selectedGame)) {
       alert("Este jogo já tem um resultado e não pode ser editado!");
       return;
     }
@@ -359,7 +380,12 @@ export default function Home() {
 
   const getEventClassNames = (info: { event: { id: any } }) => {
     const game = getGameById(info.event.id);
-    return isGameFinalized(game) ? ["event-finalizado"] : [];
+    if (isGameFinalized(game)) {
+      return ["event-finalizado"]
+    } else if (isGameTied(game)) {
+      return ["event-empate"]
+    }
+    return [];
   };
 
   const closeEditModal = () => {
@@ -435,6 +461,34 @@ export default function Home() {
             <MenuItem value="null">Pendente</MenuItem>
           </Select>
       </FormControl>
+      <FormControl variant="outlined" sx={{ width: "30%" }}>
+    <InputLabel>Time da Casa</InputLabel>
+    <Select
+      value={filter.homeTeamId || ""}
+      onChange={(e) => handleFilterChange("homeTeamId", e.target.value)}
+      label="Time da Casa"
+    >
+      {teams.map((team) => (
+        <MenuItem key={team.id} value={team.id}>
+          {team.name}
+        </MenuItem>
+      ))}
+    </Select>
+  </FormControl>
+  <FormControl variant="outlined" sx={{ width: "30%" }}>
+    <InputLabel>Time Visitante</InputLabel>
+    <Select
+      value={filter.awayTeamId || ""}
+      onChange={(e) => handleFilterChange("awayTeamId", e.target.value)}
+      label="Time Visitante"
+    >
+      {teams.map((team) => (
+        <MenuItem key={team.id} value={team.id}>
+          {team.name}
+        </MenuItem>
+      ))}
+    </Select>
+  </FormControl>
         <Button variant="contained" color="primary" onClick={applyFilter}>
           Filtrar
         </Button>

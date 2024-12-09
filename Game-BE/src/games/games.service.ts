@@ -37,27 +37,40 @@ export class GamesService {
     }
   }
 
-  async findFilteredGames(teamName?: string, date?: string, gameStatus?: string): Promise<Game[]> {
+  async findFilteredGames(
+    teamName?: string,
+    date?: string,
+    gameStatus?: string,
+    homeTeamId?: number,
+    awayTeamId?: number,
+  ): Promise<Game[]> {
     const queryBuilder = this.gamesRepository
       .createQueryBuilder('game')
       .leftJoinAndSelect('game.homeTeam', 'homeTeam')
       .leftJoinAndSelect('game.awayTeam', 'awayTeam');
-
+  
     if (teamName) {
       queryBuilder.andWhere(
         '(homeTeam.name LIKE :teamName OR awayTeam.name LIKE :teamName)',
         { teamName: `%${teamName}%` },
       );
     }
-
+  
     if (date) {
       queryBuilder.andWhere('DATE(game.dateTime) = :date', { date });
     }
-
+  
     if (gameStatus) {
-      queryBuilder.andWhere('LOWER(game.game_status) = LOWER(:gameStatus)', { gameStatus });
+      queryBuilder.andWhere('game.game_status LIKE :gameStatus', { gameStatus });
     }
-
+  
+    if (homeTeamId && awayTeamId) {
+      queryBuilder.andWhere(
+        '(game.homeTeamId = :homeTeamId AND game.awayTeamId = :awayTeamId)',
+        { homeTeamId, awayTeamId },
+      );
+    }
+  
     return await queryBuilder.getMany();
   }
 

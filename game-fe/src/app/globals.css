@@ -21,5 +21,13 @@ body {
 }
 
 .event-finalizado {
-  background-color: rgb(71, 129, 71) !important;
+  background-color: #439c74;
+  border-color: #badbcc;
+  color: #0f5132;
+}
+
+.event-empate {
+  background-color: #b87479;
+  border-color: #f5c2c7;
+  color: #842029;
 }
