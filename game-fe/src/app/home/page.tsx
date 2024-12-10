@@ -178,7 +178,7 @@ export default function Home() {
       if (filters?.gameStatus) params.append("gameStatus", filters.gameStatus);
       if (filters?.awayTeamId) params.append("awayTeamId", filters.awayTeamId);
       if (filters?.homeTeamId) params.append("homeTeamId", filters.homeTeamId);
-      if (filters?.gameLocationId) params.append("homeTeamId", filters.gameLocationId);
+      if (filters?.gameLocationId) params.append("gameLocationId", filters.gameLocationId);
 
       const response = await axios.get(
         `http://localhost:3000/games?${params.toString()}`,
@@ -466,7 +466,7 @@ export default function Home() {
   };
 
   const applyFilter = () => {
-    fetchGames(teams, filter);
+    fetchGames(teams, gameLocations, filter);
   };
 
   return (

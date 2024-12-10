@@ -1,3 +1,17 @@
+-- trigger para criar registro do time em estatistica
+DELIMITER $$
+
+CREATE TRIGGER after_team_insert
+AFTER INSERT ON team
+FOR EACH ROW
+BEGIN
+    INSERT INTO statistics (teamId, wins, losses, draws)
+    VALUES (NEW.id, 0, 0, 0);
+END$$
+
+DELIMITER ;
+
+-- trigger para estatisticas
 DELIMITER //
 CREATE TRIGGER after_game_update
 AFTER UPDATE ON game
@@ -5,6 +19,7 @@ FOR EACH ROW
 BEGIN
   DECLARE home_team_stats_id INT;
   DECLARE away_team_stats_id INT;
+
   IF NEW.game_status = 'finalizado' OR NEW.game_status = 'empate' THEN
     
     SELECT id INTO home_team_stats_id
@@ -14,7 +29,8 @@ BEGIN
     SELECT id INTO away_team_stats_id
     FROM statistics
     WHERE teamId = NEW.awayTeamId;
-
+    
+    -- Se o time da casa ganhou
     IF NEW.homePoints > NEW.awayPoints THEN
       UPDATE statistics
       SET wins = wins + 1
@@ -24,6 +40,7 @@ BEGIN
       SET losses = losses + 1
       WHERE id = away_team_stats_id;
     
+    -- Se o time visitante ganhou
     ELSEIF NEW.awayPoints > NEW.homePoints THEN
       UPDATE statistics
       SET wins = wins + 1
@@ -32,7 +49,8 @@ BEGIN
       UPDATE statistics
       SET losses = losses + 1
       WHERE id = home_team_stats_id;
-      
+    
+    -- Caso de empate
     ELSE
       UPDATE statistics
       SET draws = draws + 1
@@ -45,3 +63,18 @@ BEGIN
   END IF;
 END //
 DELIMITER ;
+
+
+-- estadios
+INSERT INTO game_location (name)
+VALUES
+  ('Estádio do Maracanã'),
+  ('Estádio do Morumbi'),
+  ('Estádio Mineirão'),
+  ('Arena Corinthians'),
+  ('Estádio Beira-Rio'),
+  ('Estádio Castelão'),
+  ('Estádio do Pacaembu'),
+  ('Arena da Baixada'),
+  ('Estádio do Allianz Parque'),
+  ('Estádio do Engenhão');

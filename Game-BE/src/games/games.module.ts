@@ -11,3 +11,4 @@ import { Game } from './entities/game.entity';
   exports: [TypeOrmModule.forFeature([Game])],
 })
 export class GamesModule {}
+

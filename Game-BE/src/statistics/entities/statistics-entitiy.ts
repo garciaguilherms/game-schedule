@@ -28,3 +28,6 @@ export class Statistics {
   @Column({ default: 0 })
   draws: number;
 }
+
+
+

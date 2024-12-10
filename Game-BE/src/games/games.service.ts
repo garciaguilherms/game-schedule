@@ -4,7 +4,7 @@ import {
   ConflictException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { IsNull, Not, Repository } from 'typeorm';
+import { Between, IsNull, Not, Repository } from 'typeorm';
 import { CreateGameDto } from './dto/create-game.dto';
 import { UpdateGameDto } from './dto/update-game.dto';
 import { Game } from './entities/game.entity';
@@ -18,30 +18,42 @@ export class GamesService {
   ) {}
 
   async create(createGameDto: CreateGameDto): Promise<Game> {
-    const { dateTime } = createGameDto;
-
+    const { homeTeamId, awayTeamId, dateTime } = createGameDto;
+  
     const formattedDateTime = new Date(dateTime);
     const utcDateTime = new Date(formattedDateTime.toISOString());
-
+    const startTime = new Date(utcDateTime.getTime() - 90 * 60 * 1000);
+    const endTime = new Date(utcDateTime.getTime() + 90 * 60 * 1000);
+  
     try {
-      const game = this.gamesRepository.create(createGameDto);
-      return await this.gamesRepository.save(game);
-    } catch (error) {
-      if (error.code === 'ER_SIGNAL_EXCEPTION' && error.sqlState === '45000') {
+      const existingGame = await this.gamesRepository.findOne({
+        where: [{homeTeamId, awayTeamId, dateTime: Between(startTime, endTime), }, 
+          { homeTeamId: awayTeamId, awayTeamId: homeTeamId, dateTime: Between(startTime, endTime), },],
+      });
+  
+      if (existingGame) {
         throw new ConflictException(
-          'Já existe um jogo marcado com os mesmos times neste horário.',
+          'Já existe um jogo marcado com os mesmos times em um intervalo de 90 minutos.',
         );
       }
+  
+      const game = this.gamesRepository.create({
+        ...createGameDto,
+        dateTime: utcDateTime,
+      });
+  
+      return await this.gamesRepository.save(game);
+    } catch (error) {
       console.error('Erro inesperado:', error);
       throw error;
     }
-  }
+  }  
+  
 
   async findFilteredGames(
     teamName?: string,
     date?: string,
-    gameStatus?: string,
-    homeTeamId?: number,
+    gameStatus?: string,    homeTeamId?: number,
     awayTeamId?: number,
     gameLocationId?: number,
 
@@ -72,6 +84,13 @@ export class GamesService {
       queryBuilder.andWhere(
         '(game.homeTeamId = :homeTeamId AND game.awayTeamId = :awayTeamId)',
         { homeTeamId, awayTeamId },
+      );
+    }
+
+    if (gameLocationId) {
+      queryBuilder.andWhere(
+        '(game.gameLocationId = :gameLocationId)',
+        { gameLocationId },
       );
     }
 
