@@ -4,8 +4,10 @@ import {
   PrimaryGeneratedColumn,
   ManyToOne,
   JoinColumn,
+  OneToOne,
 } from 'typeorm';
 import { Team } from '../../teams/entities/team.entity';
+import { GameLocation } from 'src/location/entities/location-entity';
 
 @Entity()
 export class Game {
@@ -22,6 +24,10 @@ export class Game {
   @ManyToOne(() => Team)
   @JoinColumn({ name: 'awayTeamId' })
   awayTeam: Team;
+
+  @ManyToOne(() => GameLocation)
+  @JoinColumn({ name: 'gameLocationId' })
+  gameLocation: GameLocation;
 
   @Column()
   homeTeamId: number;
@@ -40,4 +46,7 @@ export class Game {
 
   @Column({ type: 'int', nullable: true })
   winningTeamId: number | null;
+
+  @Column({ type: 'int', nullable: true })
+  gameLocationId: number | null;
 }

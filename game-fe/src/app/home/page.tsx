@@ -110,6 +110,7 @@ interface Game {
   homeTeamId?: number;
   awayTeamId?: number;
   result?: string;
+  gameLocationId?: number;
 }
 
 interface Team {
@@ -117,9 +118,13 @@ interface Team {
   name: string;
 }
 
+interface GameLocation {
+  id: number;
+  name: string;
+}
+
 export default function Home() {
   const [error, setError] = useState(null);
-  const [openDialog, setOpenDialog] = useState(false);
   const [openAddDialog, setOpenAddDialog] = useState(false);
   const [openEditDialog, setOpenEditDialog] = useState(false);
   const [openFinishDialog, setOpenFinishDialog] = useState(false);
@@ -127,6 +132,7 @@ export default function Home() {
   const [teams, setTeams] = useState<Team[]>([]);
   const [selectedEvent, setSelectedEvent] = useState<Game | null>(null);
   const [openActionModal, setOpenActionModal] = useState(false);
+  const [gameLocations, setGameLocations] = useState<GameLocation[]>([]);
   const [gameResult, setGameResult] = useState({
     homePoints: 0,
     awayPoints: 0,
@@ -139,24 +145,30 @@ export default function Home() {
     awayTeam: "",
     date: "",
     startTime: "",
+    gameLocation: "",
   });
+
   const [filter, setFilter] = useState({
     teamName: "",
     date: "",
     gameStatus: "",
     awayTeamId: "",
     homeTeamId: "",
+    gameLocationId: ""
   });
+
   const calendarRef = useRef<FullCalendar>(null);
 
   const fetchGames = async (
     teams: Team[],
+    gameLocations?: GameLocation[],
     filters?: {
       teamName?: string;
       date?: string;
       gameStatus?: string;
       awayTeamId?: string;
       homeTeamId?: string;
+      gameLocationId?: string;
     },
   ) => {
     try {
@@ -166,6 +178,8 @@ export default function Home() {
       if (filters?.gameStatus) params.append("gameStatus", filters.gameStatus);
       if (filters?.awayTeamId) params.append("awayTeamId", filters.awayTeamId);
       if (filters?.homeTeamId) params.append("homeTeamId", filters.homeTeamId);
+      if (filters?.gameLocationId) params.append("homeTeamId", filters.gameLocationId);
+
       const response = await axios.get(
         `http://localhost:3000/games?${params.toString()}`,
       );
@@ -179,12 +193,19 @@ export default function Home() {
             game_status: any;
             homePoints: number;
             awayPoints: number;
+            gameLocationId: number;
           }) => {
             const homeTeam = teams.find((team) => team.id === game.homeTeamId);
             const awayTeam = teams.find((team) => team.id === game.awayTeamId);
+            const gameLocation = gameLocations?.find((location) => location.id === game.gameLocationId);
 
             if (!homeTeam || !awayTeam) {
               console.error("Erro: Jogo sem equipe(s) definida(s)", game);
+              return null;
+            }
+
+            if (!gameLocation) {
+              console.error("Erro: Jogo sem local", game);
               return null;
             }
 
@@ -201,6 +222,7 @@ export default function Home() {
               id: game.id?.toString(),
               homeTeamId: game.homeTeamId,
               awayTeamId: game.awayTeamId,
+              gameLocationId: game.gameLocationId,
               dateTime: game.dateTime,
               title: title,
               start: game.dateTime,
@@ -227,10 +249,10 @@ export default function Home() {
   };
 
   const handleAddGame = async () => {
-    const { homeTeam, awayTeam, date, startTime } = newGame;
+    const { homeTeam, awayTeam, date, startTime, gameLocation } = newGame;
     const dateTime = new Date(`${date}T${startTime}`).toISOString();
 
-    if (!homeTeam || !awayTeam || !date || !startTime) {
+    if (!homeTeam || !awayTeam || !date || !startTime || !gameLocation) {
       alert("Por favor, preencha todos os campos.");
       return;
     }
@@ -240,15 +262,17 @@ export default function Home() {
         homeTeamId: homeTeam,
         awayTeamId: awayTeam,
         dateTime,
+        gameLocationId: gameLocation
       });
 
       setError(null);
-      fetchGames(teams);
+      fetchGames(teams, gameLocations);
       setNewGame({
         homeTeam: "",
         awayTeam: "",
         date: "",
         startTime: "",
+        gameLocation: "",
       });
       setOpenAddDialog(false);
     } catch (error: any) {
@@ -275,9 +299,11 @@ export default function Home() {
     const [date, time] = game.dateTime.split("T");
     const formattedTime = time.slice(0, 5);
 
+    console.log(game)
     setNewGame({
       homeTeam: game.homeTeamId.toString(),
       awayTeam: game.awayTeamId.toString(),
+      gameLocation: game.gameLocationId,
       date: date,
       startTime: formattedTime,
     });
@@ -289,7 +315,7 @@ export default function Home() {
   const handleSaveEditGame = async () => {
     if (!selectedEvent) return;
 
-    const { homeTeam, awayTeam, date, startTime } = newGame;
+    const { homeTeam, awayTeam, date, startTime, gameLocation } = newGame;
     const dateTime = new Date(`${date}T${startTime}`).toISOString();
 
     if (!homeTeam || !awayTeam || !date || !startTime) {
@@ -301,10 +327,11 @@ export default function Home() {
       await axios.patch(`http://localhost:3000/games/${selectedEvent.id}`, {
         homeTeamId: parseInt(homeTeam),
         awayTeamId: parseInt(awayTeam),
+        gameLocationId: parseInt(gameLocation),
         dateTime,
       });
 
-      fetchGames(teams);
+      fetchGames(teams, gameLocations);
       setSelectedEvent(null);
       setOpenEditDialog(false);
       setOpenActionModal(false);
@@ -314,6 +341,7 @@ export default function Home() {
         awayTeam: "",
         date: "",
         startTime: "",
+        gameLocation: "",
       });
     } catch (error: any) {
       setError(
@@ -363,7 +391,7 @@ export default function Home() {
           : g,
       );
       setGames(updatedGames);
-      fetchGames(teams);
+      fetchGames(teams, gameLocations);
     } catch (error) {
       console.error("Erro ao registrar o resultado do jogo:", error);
     }
@@ -410,6 +438,7 @@ export default function Home() {
       awayTeam: "",
       date: "",
       startTime: "",
+      gameLocationId: "",
     });
   };
 
@@ -418,9 +447,14 @@ export default function Home() {
       try {
         const teamResponse = await axios.get("http://localhost:3000/teams");
         setTeams(teamResponse.data);
-        fetchGames(teamResponse.data);
+
+        const gameLocationResponse = await axios.get("http://localhost:3000/game-location");
+        setGameLocations(gameLocationResponse.data);
+
+        fetchGames(teamResponse.data, gameLocationResponse.data);
+
       } catch (error) {
-        console.error("Erro ao carregar equipes e jogos:", error);
+        console.error("Erro ao carregar equipes e locais de jogos:", error);
       }
     };
 
@@ -504,6 +538,20 @@ export default function Home() {
             ))}
           </Select>
         </FormControl>
+        <FormControl variant="outlined" sx={{ width: "100%" }}>
+          <InputLabel>Estádio</InputLabel>
+          <Select
+            value={filter.gameLocationId || ""}
+            onChange={(e) => handleFilterChange("stadiumId", e.target.value)}
+            label="Estádio"
+          >
+            {gameLocations.map((location) => (
+              <MenuItem key={location.id} value={location.id}>
+                {location.name}
+              </MenuItem>
+            ))}
+          </Select>
+          </FormControl>
         <Button variant="contained" color="primary" onClick={applyFilter}>
           Filtrar
         </Button>
@@ -642,6 +690,23 @@ export default function Home() {
             />
           </FormControl>
 
+          <FormControl fullWidth margin="normal">
+          <InputLabel id="stadium-label">Estádio</InputLabel>
+          <Select
+            labelId="stadium-label"
+            value={newGame.gameLocation || ""}
+            onChange={(e) =>
+              setNewGame({ ...newGame, gameLocation: e.target.value })
+            }
+          >
+            {gameLocations.map((location) => (
+              <MenuItem key={location.id} value={location.id}>
+                {location.name}
+              </MenuItem>
+            ))}
+          </Select>
+        </FormControl>
+
           <Box
             sx={{
               display: "flex",
@@ -769,6 +834,26 @@ export default function Home() {
               }
             />
           </FormControl>
+
+          <FormControl fullWidth margin="normal">
+          <InputLabel id="stadium-label">Estádio</InputLabel>
+          <Select
+            labelId="stadium-label"
+            value={selectedEvent?.gameLocationId || ""}
+            onChange={(e) =>
+              setSelectedEvent({
+                ...selectedEvent,
+                gameLocationId: e.target.value,
+              })
+            }
+          >
+            {gameLocations.map((location) => (
+              <MenuItem key={location.id} value={location.id}>
+                {location.name}
+              </MenuItem>
+            ))}
+          </Select>
+        </FormControl>
 
           <Box
             sx={{

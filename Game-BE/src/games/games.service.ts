@@ -43,6 +43,8 @@ export class GamesService {
     gameStatus?: string,
     homeTeamId?: number,
     awayTeamId?: number,
+    gameLocationId?: number,
+
   ): Promise<Game[]> {
     const queryBuilder = this.gamesRepository
       .createQueryBuilder('game')

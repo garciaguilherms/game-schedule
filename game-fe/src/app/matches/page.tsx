@@ -51,8 +51,8 @@ export default function Teams() {
   };
 
   const handleSearch = (term: string) => {
-    setSearchTerm(term); // Atualiza o termo de busca no estado
-    fetchTeams(term); // Chama o backend para buscar os times filtrados
+    setSearchTerm(term);
+    fetchTeams(term);
   };
 
   const handleDeleteTeam = async (id: number | undefined) => {

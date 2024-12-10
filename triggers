@@ -1,4 +1,3 @@
- -- Verifica se o jogo foi finalizado e se houve alteração no status do jogo
 DELIMITER //
 CREATE TRIGGER after_game_update
 AFTER UPDATE ON game
@@ -6,21 +5,16 @@ FOR EACH ROW
 BEGIN
   DECLARE home_team_stats_id INT;
   DECLARE away_team_stats_id INT;
-  
-  -- Verifica se o status foi alterado para 'finalizado' e se houve alteração nos pontos
   IF NEW.game_status = 'finalizado' OR NEW.game_status = 'empate' THEN
     
-    -- Busca o registro de estatísticas do time da casa
     SELECT id INTO home_team_stats_id
     FROM statistics
     WHERE teamId = NEW.homeTeamId;
     
-    -- Busca o registro de estatísticas do time visitante
     SELECT id INTO away_team_stats_id
     FROM statistics
     WHERE teamId = NEW.awayTeamId;
-    
-    -- Se o time da casa ganhou
+
     IF NEW.homePoints > NEW.awayPoints THEN
       UPDATE statistics
       SET wins = wins + 1
@@ -30,7 +24,6 @@ BEGIN
       SET losses = losses + 1
       WHERE id = away_team_stats_id;
     
-    -- Se o time visitante ganhou
     ELSEIF NEW.awayPoints > NEW.homePoints THEN
       UPDATE statistics
       SET wins = wins + 1
@@ -39,8 +32,7 @@ BEGIN
       UPDATE statistics
       SET losses = losses + 1
       WHERE id = home_team_stats_id;
-    
-    -- Caso de empate
+      
     ELSE
       UPDATE statistics
       SET draws = draws + 1

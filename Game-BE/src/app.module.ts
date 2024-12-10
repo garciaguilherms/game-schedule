@@ -8,6 +8,8 @@ import { Team } from './teams/entities/team.entity';
 import { Game } from './games/entities/game.entity';
 import { StatisticsModule } from './statistics/statistics.module';
 import { Statistics } from './statistics/entities/statistics-entitiy';
+import { GameLocation } from './location/entities/location-entity';
+import { GameLocationModule } from './location/location.module';
 
 @Module({
   imports: [
@@ -18,13 +20,14 @@ import { Statistics } from './statistics/entities/statistics-entitiy';
       username: 'root',
       password: '2458',
       database: 'trabalho',
-      entities: [Team, Game, Statistics],
+      entities: [Team, Game, Statistics, GameLocation],
       synchronize: true,
       autoLoadEntities: true,
     }),
     TeamsModule,
     GamesModule,
     StatisticsModule,
+    GameLocationModule
   ],
   controllers: [AppController],
   providers: [AppService],

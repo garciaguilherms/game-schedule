@@ -18,4 +18,8 @@ export class CreateGameDto {
   @IsNumber()
   @IsNotEmpty()
   awayTeamId: number;
+
+  @IsOptional()
+  @IsInt()
+  gameLocationId: number;
 }
