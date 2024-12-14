@@ -31,6 +31,7 @@ export class GamesController {
     @Query('gameStatus') gameStatus?: string,
     @Query('awayTeamId') awayTeamId?: number,
     @Query('homeTeamId') homeTeamId?: number,
+    @Query('gameLocationId') gameLocationId?: number,
   ): Promise<Game[]> {
     return this.gamesService.findFilteredGames(
       teamName,
@@ -38,6 +39,7 @@ export class GamesController {
       gameStatus,
       homeTeamId,
       awayTeamId,
+      gameLocationId
     );
   }
 

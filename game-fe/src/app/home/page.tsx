@@ -197,7 +197,7 @@ export default function Home() {
           }) => {
             const homeTeam = teams.find((team) => team.id === game.homeTeamId);
             const awayTeam = teams.find((team) => team.id === game.awayTeamId);
-            const gameLocation = gameLocations?.find((location) => location.id === game.gameLocationId);
+            const gameLocation = gameLocations?.find((gameLocation) => gameLocation.id === game.gameLocationId);
 
             if (!homeTeam || !awayTeam) {
               console.error("Erro: Jogo sem equipe(s) definida(s)", game);
@@ -542,12 +542,12 @@ export default function Home() {
           <InputLabel>Estádio</InputLabel>
           <Select
             value={filter.gameLocationId || ""}
-            onChange={(e) => handleFilterChange("stadiumId", e.target.value)}
+            onChange={(e) => handleFilterChange("gameLocationId", e.target.value)}
             label="Estádio"
           >
-            {gameLocations.map((location) => (
-              <MenuItem key={location.id} value={location.id}>
-                {location.name}
+            {gameLocations.map((gameLocation) => (
+              <MenuItem key={gameLocation.id} value={gameLocation.id}>
+                {gameLocation.name}
               </MenuItem>
             ))}
           </Select>
