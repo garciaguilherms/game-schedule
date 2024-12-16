@@ -317,6 +317,7 @@ export default function Home() {
 
     const { homeTeam, awayTeam, date, startTime, gameLocation } = newGame;
     const dateTime = new Date(`${date}T${startTime}`).toISOString();
+    console.log(dateTime);
 
     if (!homeTeam || !awayTeam || !date || !startTime) {
       alert("Por favor, preencha todos os campos.");
@@ -820,20 +821,33 @@ export default function Home() {
           </FormControl>
 
           <FormControl fullWidth margin="normal">
-            <InputLabel htmlFor="start-time"></InputLabel>
-            <TextField
-              id="start-time"
-              type="time"
-              fullWidth
-              value={selectedEvent?.dateTime.split("T")[1] || ""}
-              onChange={(e) =>
-                setSelectedEvent({
-                  ...selectedEvent,
-                  dateTime: `${selectedEvent.dateTime.split("T")[0]}T${e.target.value}:00`,
-                })
-              }
-            />
-          </FormControl>
+  <InputLabel htmlFor="start-time"></InputLabel>
+  <TextField
+    id="start-time"
+    type="time"
+    fullWidth
+    value={
+      selectedEvent?.dateTime
+        ? new Date(selectedEvent.dateTime).toLocaleTimeString("pt-BR", {
+            hour: "2-digit",
+            minute: "2-digit",
+            hour12: false,
+          })
+        : ""
+    }
+    onChange={(e) =>
+      setSelectedEvent({
+        ...selectedEvent,
+        dateTime: new Date(
+          new Date(selectedEvent.dateTime).toISOString().split("T")[0] +
+            "T" +
+            e.target.value
+        ).toISOString(),
+      })
+    }
+  />
+</FormControl>
+
 
           <FormControl fullWidth margin="normal">
           <InputLabel id="stadium-label">Estádio</InputLabel>

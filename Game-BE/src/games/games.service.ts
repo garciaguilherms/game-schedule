@@ -114,7 +114,7 @@ export class GamesService {
         `Não foi encontrado nenhum jogo com id: ${id}`,
       );
     }
-
+console.log(game);
     Object.assign(game, updateGameDto);
     return await this.gamesRepository.save(game);
   }
